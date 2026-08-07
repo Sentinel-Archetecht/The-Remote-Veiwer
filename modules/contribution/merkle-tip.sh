@@ -1,50 +1,42 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Offline "merkle tip": commit to current ledger tip sha + counts
-# Not a full binary Merkle tree yet — tip hash of chained events is the commitment.
 set -euo pipefail
+python3 - << 'PY'
+import os, json, hashlib, datetime, subprocess
 
-DIR="${HOME}/.local/share/remote-viewer/contribution"
-FILE="${DIR}/events.jsonl"
-OUT_DIR="${DIR}/commitments"
-mkdir -p "$OUT_DIR"
+DIR = "/data/data/com.termux/files/home/.local/share/remote-viewer/contribution"
+FILE = DIR + "/events.jsonl"
+OUT_DIR = DIR + "/commitments"
+os.makedirs(OUT_DIR, exist_ok=True)
 
-if [[ ! -f "$FILE" ]] || [[ ! -s "$FILE" ]]; then
-  echo "FAIL: no events" >&2
-  exit 1
-fi
+verify = os.getcwd() + "/modules/contribution/verify.sh"
+subprocess.check_call(["bash", verify])
 
-# Prefer verify before committing
-if [[ -x "$(dirname "$0")/verify.sh" ]] || [[ -f "$(dirname "$0")/verify.sh" ]]; then
-  if ! bash "$(dirname "$0")/verify.sh"; then
-    echo "FAIL: chain verify failed — no commitment" >&2
-    exit 1
-  fi
-fi
+with open(FILE) as f:
+    lines = [l.strip() for l in f if l.strip()]
 
-LAST=$(tail -n 1 "$FILE")
-TIP=$(printf '%s' "$LAST" | sed -n 's/.*"sha":"\([^"]*\)".*/\1/p')
-N=$(wc -l < "$FILE" | tr -d ' ')
-TS=$(date -Iseconds)
-ID=$(date +%Y%m%dT%H%M%S)
+last = json.loads(lines[-1])
+tip = last["sha"]
+n = len(lines)
+ts = datetime.datetime.now().astimezone().isoformat()
 
-if [[ -z "$TIP" ]]; then
-  echo "FAIL: tip sha missing (run Stage 2 records)" >&2
-  exit 1
-fi
+body = {
+    "type": "ledger_tip",
+    "ts": ts,
+    "event_count": n,
+    "tip_sha": tip
+}
 
-# Body committed
-BODY=$(printf '{"type":"ledger_tip","ts":"%s","event_count":%s,"tip_sha":"%s"}' "$TS" "$N" "$TIP")
-if command -v sha256sum >/dev/null 2>&1; then
-  COMMIT=$(printf '%s' "$BODY" | sha256sum | awk '{print $1}')
-else
-  COMMIT=$(printf '%s' "$BODY" | sha256 | awk '{print $1}')
-fi
+body_str = json.dumps(body, separators=(",", ":"))
+commit = hashlib.sha256(body_str.encode()).hexdigest()
+body["commit"] = commit
 
-OUT="${OUT_DIR}/tip-${ID}.json"
-printf '%s,"commit":"%s"}\n' "${BODY%\}"" "$COMMIT" > "$OUT"
-chmod 600 "$OUT" 2>/dev/null || true
+out = OUT_DIR + "/tip-" + datetime.datetime.now().strftime("%Y%m%dT%H%M%S") + ".json"
+with open(out, "w") as f:
+    json.dump(body, f)
+os.chmod(out, 0o600)
 
-echo "Commitment written: $OUT"
-echo "tip_sha=$TIP"
-echo "commit=$COMMIT"
-echo "events=$N"
+print("Commitment written:", out)
+print("tip_sha=" + tip)
+print("commit=" + commit)
+print("events=" + str(n))
+PY
