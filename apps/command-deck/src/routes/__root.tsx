@@ -17,7 +17,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: `In God We Trust. ${DECK_NAME} for ${NETWORK_NAME}. Neural Link heals tissue. God's Eye reads human byproducts — never bodies. Two games only. One Remote Viewer HUB on every device. Native web stack A–Z — any Wi-Fi device. No Google identity, no wallet.`,
+        content: `In God We Trust. ${DECK_NAME} for ${NETWORK_NAME}. Neural watch walks the neuron. God's Eye is the later orbit — exhaust of systems, never bodies. Same facts. Two lenses. Keys on the device.`,
       },
       { name: "theme-color", content: "#070910" },
       { name: "color-scheme", content: "dark" },
