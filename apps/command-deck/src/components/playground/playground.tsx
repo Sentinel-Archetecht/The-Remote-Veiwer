@@ -78,8 +78,10 @@ import {
 import { BoardDashboard, InstallStrip } from "./board";
 import { RepairPanel } from "./repair";
 import { AffairsChip, AffairsPanel } from "./affairs";
-import { FriendsPanel, GuestGate, ShopPanel, SocialDock, useClaimSocial } from "./social";
-import { PillChip, PillGate, useHydratePill } from "./pill";
+import { FriendsPanel, ShopPanel, SocialDock, useClaimSocial } from "./social";
+import { LensBar, PillGate, useHydratePill } from "./pill";
+import { DrillChip, DrillGate, OrderStrip } from "./tutorial";
+import { useDrill } from "@/lib/tutorial";
 import { SpecialistChip, SpecialistPanel } from "./specialist";
 import { DigitalLife } from "./life";
 import { useSpecialist } from "@/lib/specialist";
@@ -166,8 +168,9 @@ function Toolbar() {
 
   return (
     <div className="deck-toolbar pointer-events-none absolute inset-x-0 z-10 px-3 pb-2 sm:px-5">
-      <div className="pointer-events-auto flex w-full max-w-[calc(100%-3.75rem)] flex-col gap-2 rounded-xl bg-card p-2 shadow-[var(--shadow-border)] sm:max-w-2xl sm:p-3">
-        <div className="flex items-center gap-2" role="group" aria-label="Strain toggle">
+      <div className="pointer-events-auto flex w-full flex-col gap-1.5 rounded-lg bg-card/85 p-1.5 shadow-[var(--shadow-border)] sm:max-w-xl">
+        <OrderStrip />
+        <div className="flex items-center gap-1" role="group" aria-label="Strain toggle">
           {SHAPE_KINDS.map((kind) => {
             const Icon = orbit ? SHAPE_ICONS[kind] : NEURAL_ICONS[kind];
             const label = labels[kind];
@@ -184,7 +187,7 @@ function Toolbar() {
                 )}
               >
                 <Icon className="size-4" strokeWidth={1.75} />
-                <span className="hidden sm:inline">{label}</span>
+                <span>{label}</span>
               </Button>
             );
           })}
@@ -192,32 +195,24 @@ function Toolbar() {
         <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Field taps">
           <Button
             variant={now ? "primary" : wait ? "ghost" : "solid"}
-            aria-label={
-              now
-                ? `NOW. Seize the nearest strain or wait for the next upgrade.`
-                : snap
-                  ? `SNAP drop ${labels[selected]}. Score now — lock in ${Math.max(0, Math.ceil(pressure.hotIn / 1000))} seconds.`
-                  : wait
-                    ? `You wait. Next SNAP in ${snapIn} seconds. Drop still stocks the field.`
-                    : `Drop ${labels[selected]}`
-            }
-            onClick={() => (now ? seizeNow() : spawn())}
-            className={cn("flex-1 sm:flex-none", now && "pulse-snap-hot", wait && "pulse-wait")}
+            aria-label={`Call ${labels[selected]} onto the field`}
+            onClick={() => spawn()}
+            className="flex-1 sm:flex-none"
             data-snap={snap ? "1" : "0"}
             data-severity={pressure.severity}
             data-wait={wait ? "1" : "0"}
           >
-            {wait ? <Timer className="size-4" strokeWidth={1.75} /> : <CirclePlus className="size-4" strokeWidth={1.75} />}
-            {now ? "NOW" : snap ? "SNAP" : wait ? "WAIT" : "Drop"}
+            <CirclePlus className="size-4" strokeWidth={1.75} />
+            Call
           </Button>
           <Button
             variant="solid"
             aria-label={orbit ? "Sweep byproducts onto the mesh" : "Pulse an outbreak into the CSF"}
             onClick={scatter}
-            className="flex-1 sm:flex-none"
+            className="hidden"
           >
             <Activity className="size-4" strokeWidth={1.75} />
-            <span className="hidden sm:inline">{orbit ? "Sweep" : "Outbreak"}</span>
+            <span>{orbit ? "Sweep" : "Outbreak"}</span>
           </Button>
           <Button
             variant={lookMode ? "selected" : "ghost"}
@@ -226,8 +221,9 @@ function Toolbar() {
             onClick={() => toggleLook()}
           >
             <Orbit className="size-4" strokeWidth={1.75} />
-            <span className="hidden sm:inline">Look</span>
+            <span>Look</span>
           </Button>
+          <span className="hidden">
           <Button
             variant={q.uhd ? "selected" : "ghost"}
             aria-label={
@@ -267,6 +263,7 @@ function Toolbar() {
             <Trash2 className="size-4" strokeWidth={1.75} />
             <span className="hidden sm:inline">Clear</span>
           </Button>
+          </span>
         </div>
       </div>
     </div>
@@ -803,122 +800,54 @@ function Header({
   const heldAffairs = useAffairs((s) => s.held.affairs);
   const freezeNeural = heldSynapse || heldAffairs;
   const freezeOrbit = heldOrbit || heldAffairs;
+  const neuralNamed =
+    isLearned(learned, "neural-sphere") &&
+    isLearned(learned, "neural-box") &&
+    isLearned(learned, "neural-cylinder");
 
   return (
-    <header className="pointer-events-none absolute inset-x-0 top-0 z-30 px-3 pt-[max(1rem,env(safe-area-inset-top))] sm:px-5">
-      <div className="flex items-start justify-between gap-3">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-30 px-2 pt-[max(0.4rem,env(safe-area-inset-top))]">
+      <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT}</p>
-          <h1 className="deck-title font-display mt-1 text-2xl font-semibold tracking-tight text-foreground">
+          <p className="text-[10px] font-medium tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT}</p>
+          <h1 className="deck-title font-display text-base font-semibold tracking-tight text-foreground">
             {DECK_NAME}
           </h1>
-          <p className="mt-1 text-xs font-medium tracking-[0.18em] text-sage uppercase">{MOTTO}</p>
-          <PillChip />
-          <p className="deck-tag mt-1 hidden max-w-sm text-xs leading-relaxed text-muted sm:block">
-            {orbit ? THEATER_ORBIT_TAG : NETWORK_TAG}
-          </p>
-          <p className="mt-1 truncate text-xs text-subtle sm:hidden">{last}</p>
-          <div className="pointer-events-auto mt-2 flex w-fit items-center gap-1 rounded-xl bg-card p-1 shadow-[var(--shadow-border)]">
-            <Button
-              variant={theater === "neural" ? "selected" : "ghost"}
-              aria-label="Enter Neural Link"
-              aria-pressed={theater === "neural"}
-              disabled={freezeNeural && theater !== "neural"}
-              onClick={() => setTheater("neural")}
-            >
-              <BrainCircuit className="size-4" strokeWidth={1.75} />
-              <span className="hidden sm:inline">{THEATER_NEURAL}</span>
-            </Button>
-            <Button
-              variant={theater === "orbit" ? "selected" : "ghost"}
-              aria-label="Enter God's Eye theater"
-              aria-pressed={theater === "orbit"}
-              disabled={freezeOrbit && theater !== "orbit"}
-              onClick={() => setTheater("orbit")}
-            >
-              <Globe className="size-4" strokeWidth={1.75} />
-              <span className="hidden sm:inline">{THEATER_ORBIT}</span>
-            </Button>
-          </div>
-          <LiveLeadBar onOpen={() => setPanel(panel === "board" ? null : "board")} />
-          <p className="deck-hint mt-2 hidden font-mono text-sm text-foreground tabular-nums sm:block">
-            {count} {orbit ? "on the mesh" : "in the CSF"}
-            <span className="ml-2 font-sans text-xs text-muted">
-              {lookMode
-                ? "Look on. Drag to orbit. Toggle Look off, then tap a strain to seize."
-                : orbit
-                  ? "Tap a byproduct to seize it. Toggle a type, tap Drop — or tap the field."
-                  : "Tap a virion to seize it. Toggle a type, tap Drop — or tap the field."}
-            </span>
-          </p>
         </div>
-        <div className="rank-chip pointer-events-auto flex shrink-0 flex-col items-end gap-1 rounded-xl bg-card p-1 shadow-[var(--shadow-border)]">
-          <div className="flex items-center gap-1">
-            <Button
-              variant={claimed ? "ghost" : "primary"}
-              aria-label={claimed ? "Daily watch already claimed" : "Claim daily watch"}
-              onClick={() => claimWatch()}
-              disabled={claimed}
-            >
-              <Eye className="size-4" strokeWidth={1.75} />
-              <span className="hidden sm:inline">{claimed ? "On watch" : "Watch"}</span>
-            </Button>
-            <Button
-              variant={panel === "vault" ? "selected" : "ghost"}
-              aria-label="Open profile vault"
-              aria-pressed={panel === "vault"}
-              onClick={() => setPanel(panel === "vault" ? null : "vault")}
-            >
-              <Fingerprint className="size-4" strokeWidth={1.75} />
-              <span className="hidden font-mono text-xs sm:inline">{rank.title}</span>
-              <span className="hidden font-mono text-xs text-subtle lg:inline">{ready ? short : "minting"}</span>
-            </Button>
-            <Button
-              variant={panel === "board" ? "selected" : "ghost"}
-              aria-label="Open mesh board"
-              aria-pressed={panel === "board"}
-              onClick={() => setPanel(panel === "board" ? null : "board")}
-            >
-              <ListOrdered className="size-4" strokeWidth={1.75} />
-              <span className="hidden sm:inline">Board</span>
-            </Button>
-            <Button
-              variant={panel === "briefing" ? "selected" : "ghost"}
-              aria-label="Open briefing"
-              aria-pressed={panel === "briefing"}
-              onClick={() => setPanel(panel === "briefing" ? null : "briefing")}
-            >
-              <ScrollText className="size-4" strokeWidth={1.75} />
-              <span className="hidden sm:inline">Briefing</span>
-            </Button>
-            <InstallChip />
-          </div>
-          <div className="h-1 w-full overflow-hidden rounded-full bg-foreground/12" aria-hidden>
-            <div className="meter-fill" style={{ width: `${xpPct}%` }} />
-          </div>
-          <p
-            className="px-1 font-mono text-xs text-sage tabular-nums"
-            aria-label={`Sentinel OS ${osName}, ${osN} of 6 signatures`}
+        <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg bg-card/85 p-0.5 shadow-[var(--shadow-border)]">
+          <Button
+            variant={theater === "neural" ? "selected" : "ghost"}
+            size="sm"
+            aria-label="Enter Neural Link"
+            aria-pressed={theater === "neural"}
+            disabled={freezeNeural && theater !== "neural"}
+            onClick={() => setTheater("neural")}
           >
-            OS {osN}/6
-            <span className="ml-1 hidden text-muted sm:inline">{osName}</span>
-          </p>
-          <PulseStrip />
-          <HubChip onOpen={() => setPanel(panel === "vault" ? null : "vault")} />
-          <RepairChip
-            active={panel === "repair"}
-            onOpen={() => setPanel(panel === "repair" ? null : "repair")}
-          />
-          <AffairsChip
-            active={panel === "affairs"}
-            onOpen={() => setPanel(panel === "affairs" ? null : "affairs")}
-          />
-          <SpecialistChip
-            active={panel === "specialist"}
-            onOpen={() => setPanel(panel === "specialist" ? null : "specialist")}
+            <BrainCircuit className="size-3.5" strokeWidth={1.75} />
+            Link
+          </Button>
+          <Button
+            variant={theater === "orbit" ? "selected" : "ghost"}
+            size="sm"
+            aria-label="Enter God's Eye theater"
+            aria-pressed={theater === "orbit"}
+            disabled={(freezeOrbit || !neuralNamed) && theater !== "orbit"}
+            onClick={() => setTheater("orbit")}
+          >
+            <Globe className="size-3.5" strokeWidth={1.75} />
+            Eye
+          </Button>
+        </div>
+        <div className="pointer-events-auto flex min-w-0 items-center gap-1">
+          <DrillChip
+            onOpen={() => {
+              setPanel(null);
+              useDrill.getState().start();
+            }}
           />
         </div>
       </div>
+      <LensBar />
     </header>
   );
 }
@@ -1198,6 +1127,17 @@ export function Playground() {
   useClaimSocial();
   useHydratePill();
   useEffect(() => {
+    useDrill.getState().hydrate();
+  }, []);
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const s = usePlayground.getState();
+      const n = s.bodies.filter((b) => b.role === "threat").length;
+      if (n < 7) s.spawn();
+    }, 12000);
+    return () => window.clearInterval(id);
+  }, []);
+  useEffect(() => {
     useSpecialist.getState().hydrate();
   }, []);
   const pill = usePill((s) => s.lens);
@@ -1229,6 +1169,7 @@ export function Playground() {
       api.carryLife = (pin: string, raw: unknown) => import("@/lib/life").then((m) => m.carryLife(pin, raw));
       api.destroyLife = () => import("@/lib/life").then((m) => m.destroyThisCopy());
       api.openFriends = () => setPanel("friends");
+      api.openDrill = () => useDrill.getState().start();
       api.choosePill = (pill: "red" | "blue") => usePill.getState().choose(pill);
       api.peekPill = () => usePill.getState().peek();
       api.pill = () => viewingLens(usePill.getState());
@@ -1387,14 +1328,9 @@ export function Playground() {
         />
       ) : null}
       {panel === "shop" ? <ShopPanel onClose={() => setPanel(null)} /> : null}
-      {panel === null ? <GuestGate onPlay={() => undefined} /> : null}
+      <DrillGate />
       <Toolbar />
-      <SocialDock
-        panel={panel}
-        onFriends={() => setPanel(panel === "friends" ? null : "friends")}
-        onBoard={() => setPanel(panel === "board" ? null : "board")}
-        onYou={() => setPanel(panel === "vault" ? null : "vault")}
-      />
+      {null}
       <PhysicsLegend />
       <p className={cn("sr-only")}>
         Command Deck for The Remote Viewer Network. In God We Trust. Choose red or blue lens before sign-in. Same facts, two deliveries. Glimpse the other side. Two games only: Neural Link and God's Eye. Neural Link: remote neuron in cerebrospinal fluid against HSV, West

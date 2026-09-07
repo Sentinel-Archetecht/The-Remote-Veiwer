@@ -62,7 +62,7 @@ const ORBIT_PALETTE: Record<ShapeKind, string[]> = {
   cylinder: ["#7d9a7e", "#d4b85a", "#6a8a5a"],
 };
 
-const SENTINEL = "#7d9a7e";
+const SENTINEL = "#d4b05a";
 
 let nextId = 1;
 
@@ -120,6 +120,7 @@ export function makeBody(
 function seedNeural(): SpawnedBody[] {
   const t: Theater = "neural";
   return [
+    makeBody("sphere", t, [0, 4.2, 0.12], undefined, 1.5, "sentinel"),
     makeBody("sphere", t, [-1.15, 3.7, 0.45]),
     makeBody("sphere", t, [1.35, 4.3, -0.55]),
     makeBody("sphere", t, [0.15, 5.05, 1.05]),
@@ -146,7 +147,7 @@ function seedFor(theater: Theater) {
 
 const OPENING: BriefingLine = {
   t: 0,
-  text: "Tap a strain to seize it. Toggle a type, then tap Drop — or tap the field.",
+  text: "Look around the neuron. Contacts spawn in the tissue. Tap one — THC walks to it.",
 };
 
 type PlaygroundState = {
@@ -157,6 +158,7 @@ type PlaygroundState = {
   restitution: number;
   grabbing: boolean;
   lookMode: boolean;
+  markedId: number | null;
   briefing: BriefingLine[];
   watchDay: string | null;
   discovered: boolean;
@@ -172,6 +174,7 @@ type PlaygroundState = {
   discover: () => void;
   dismissLegend: () => void;
   markSeize: (id: number) => void;
+  markTarget: (id: number) => void;
   osStrike: () => boolean;
   pushBrief: (text: string) => void;
   setSelected: (kind: ShapeKind) => void;
@@ -246,6 +249,7 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
   restitution: 0.14,
   grabbing: false,
   lookMode: true,
+  markedId: null,
   briefing: [OPENING],
   watchDay: null,
   discovered: false,
@@ -334,6 +338,22 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
   },
   setTheater: (theater) => {
     if (theater === get().theater) return;
+    if (theater === "orbit") {
+      const learned = useProgress.getState().learned;
+      const named =
+        isLearned(learned, "neural-sphere") &&
+        isLearned(learned, "neural-box") &&
+        isLearned(learned, "neural-cylinder");
+      if (!named) {
+        set({
+          briefing: note(
+            "Name the neuron first. HSV, West Nile, rabies — three contacts each. God's Eye is the later watch, from a galactic scale.",
+            get().briefing,
+          ),
+        });
+        return;
+      }
+    }
     if (!assertTheaterAllowed(theater)) {
       set({
         briefing: note(
@@ -354,8 +374,8 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
       outcome: null,
       briefing: note(
         theater === "orbit"
-          ? "God's Eye online. Byproducts of human systems — never bodies."
-          : "Entered the cranial vault. Neurotropic virions in the cerebrospinal fluid.",
+          ? "God's Eye online. Galactic watch. Exhaust of systems — never bodies."
+          : "Neural watch. THC is in the fluid. Analyze, defend, learn.",
         get().briefing,
       ),
     });
@@ -455,13 +475,22 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
       briefing = note("Sentinel OS autonomous. Self-defense live in Neural Link and God's Eye.", briefing);
     }
     if (result.ranked) briefing = note(`Rank up — ${result.ranked.title}. Combined dossier advanced.`, briefing);
-    briefing = note(`Seized ${KIND_LABEL[theater][b.kind]}.`, briefing);
+    briefing = note(`Cataloged ${KIND_LABEL[theater][b.kind]}. THC learned.`, briefing);
     set({
       bodies: bodies.filter((row) => row.id !== id),
+      markedId: get().markedId === id ? null : get().markedId,
       briefing,
     });
     void broadcastPulse();
     if (pressure.lock) void broadcastStanding();
+  },
+  markTarget: (id) => {
+    const b = get().bodies.find((row) => row.id === id);
+    if (!b || b.role !== "threat") return;
+    set({
+      markedId: id,
+      briefing: note(`Marked ${KIND_LABEL[get().theater][b.kind]}. THC is moving to analyze.`, get().briefing),
+    });
   },
   seizeNow: () => {
     if (!isTheaterNow()) {

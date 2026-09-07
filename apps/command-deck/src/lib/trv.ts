@@ -3,7 +3,7 @@ export const NETWORK_NAME = "The Remote Viewer";
 export const NETWORK_SHORT = "TRV";
 export const MOTTO = "In God We Trust";
 export const NETWORK_TAG =
-  "In God We Trust. A sovereign American watch: social, education, finance rails, and digital life on your keys. Sentinel OS learns and self-heals. Two games: Neural Link and God's Eye.";
+  "In God We Trust. A sovereign American watch. Same facts. Two lenses. Neural Link reads the neuron. God's Eye reads exhaust of systems — never bodies.";
 export const DECK_NAME = "Command Deck";
 export const THEATER_NEURAL = "Neural Link";
 export const THEATER_ORBIT = "God's Eye";
@@ -16,7 +16,7 @@ export const NATIVE_TAG =
   "A–Z native web. Host ICE on Wi-Fi. WebCrypto, WebRTC, WebGL, PWA. Zero Google identity, zero wallet.";
 export const BOARD_NAME = "Mesh Board";
 export const BOARD_TAG =
-  "Live leadership on local, national, and globe pulses. SNAP window scores. Last four seconds or a close race is NOW — seize then or wait.";
+  "A record of the watch — local, national, globe. Not a leaderboard for sport.";
 export const ORIGIN_X = "https://x.com/Archtecht";
 export const ORIGIN_X_HANDLE = "@Archtecht";
 export const ORIGIN_GITHUB = "https://github.com/Sentinel-Architech/The-Remote-Viewer";
@@ -39,8 +39,8 @@ export const GATEWAY_TAG =
 
 export function sharePulseHref(score = 0) {
   const body = score
-    ? `Seized on The Remote Viewer Command Deck. Pulse ${score}. In God We Trust. Keys on the device. Sentinel named it.\n\n${ORIGIN_DECK}\n#TheRemoteViewer`
-    : `The Remote Viewer — In God We Trust. Sovereign watch. Gateway Process. Sentinel OS. Keys on the device.\n\n${GATEWAY_HREF}\n#TheRemoteViewer`;
+    ? `Seized on The Remote Viewer Command Deck. Pulse ${score}. In God We Trust. Keys on the device.\n\n${ORIGIN_DECK}\n#TheRemoteViewer`
+    : `The Remote Viewer — In God We Trust. Sovereign watch. Gateway Process. Keys on the device.\n\n${ORIGIN_DECK}\n#TheRemoteViewer`;
   return `${X_INTENT}?text=${encodeURIComponent(body)}`;
 }
 export const BOT_NAME = "Sentinel Repair";
