@@ -38,6 +38,7 @@ const huntBodies = new Map<
   number,
   { role: SpawnedBody["role"]; kind: SpawnedBody["kind"]; rb: RapierRigidBody }
 >();
+const NEURAL_FOG = "#1a0c0e";
 const ORBIT_FOG = "#020308";
 const _up = new THREE.Vector3(0, 1, 0);
 
@@ -125,12 +126,12 @@ function paintTex(hex: string) {
 function FallbackDeckTex({ children }: { children: ReactNode }) {
   const tex = useMemo<DeckTex>(
     () => ({
-      cortex: paintTex("#6a3a3a"),
-      lesion: paintTex("#4a1c1c"),
-      skull: paintTex("#c8b8a8"),
-      virus: paintTex("#7a2a2a"),
-      helix: paintTex("#3a6a4a"),
-      earth: paintTex("#1a3a6a"),
+      cortex: paintTex("#c4897a"),
+      lesion: paintTex("#8a3a32"),
+      skull: paintTex("#e8d8c8"),
+      virus: paintTex("#c45c4a"),
+      helix: paintTex("#7d9a7e"),
+      earth: paintTex("#3a6a9a"),
     }),
     [],
   );
@@ -651,15 +652,16 @@ function NeuralLights() {
   const map = useFieldQuality().shadowMap;
   return (
     <>
-      <hemisphereLight args={["#f0c4b0", "#2a1214", 0.85]} />
-      <ambientLight intensity={0.42} />
+      <hemisphereLight args={["#f0c4b0", "#2a1214", 1.15]} />
+      <ambientLight intensity={0.72} />
       <directionalLight
         position={[5, 9, 4]}
-        intensity={1.2}
+        intensity={1.55}
         color="#ffd8c8"
         castShadow={Boolean(shadows)}
         shadow-mapSize={shadows ? [map, map] : [256, 256]}
       />
+      <pointLight position={[0.4, 5.2, 3.4]} intensity={1.4} distance={16} color="#ffc4a8" />
       {shadows ? (
         <>
           <pointLight position={[2.1, 3.2, 1.1]} intensity={1.15} distance={11} color="#c45c4a" />
@@ -726,7 +728,7 @@ function SceneTint() {
     if (theater === "neural") {
       const fog = now ? "#2a0c0c" : wait ? "#0c1014" : NEURAL_FOG;
       gl.setClearColor(fog, 1);
-      scene.fog = new THREE.FogExp2(fog, 0.052 - heal * 0.01 + (wait ? 0.018 : 0));
+      scene.fog = new THREE.FogExp2(fog, 0.028 - heal * 0.006 + (wait ? 0.01 : 0));
     } else {
       const fog = now ? "#140606" : wait ? "#030508" : ORBIT_FOG;
       gl.setClearColor(fog, 1);
@@ -740,7 +742,7 @@ function CameraRig() {
   const theater = usePlayground((s) => s.theater);
   const { camera } = useThree();
   useEffect(() => {
-    if (theater === "neural") camera.position.set(4.1, 3.35, 5.15);
+    if (theater === "neural") camera.position.set(0.2, 4.6, 7.2);
     else camera.position.set(6.8, 2.8, 8.0);
   }, [theater, camera]);
   return null;
@@ -842,8 +844,8 @@ function World() {
           target={neural ? [0, 1.15, 0] : [0, 0, 0]}
           minPolarAngle={neural ? 0.28 : 0.12}
           maxPolarAngle={neural ? Math.PI / 2 - 0.08 : Math.PI - 0.18}
-          minDistance={neural ? 2.0 : 4.8}
-          maxDistance={neural ? 10 : 22}
+          minDistance={neural ? 4.2 : 4.8}
+          maxDistance={neural ? 12 : 22}
           rotateSpeed={q.coarse ? 0.72 : 1}
           touches={{
             ONE: THREE.TOUCH.ROTATE,
@@ -874,7 +876,7 @@ export const PlaygroundCanvas = memo(function PlaygroundCanvas() {
       shadows={q.shadows}
       dpr={q.dpr}
       performance={{ min: 0.4, max: 1, debounce: 200 }}
-      camera={{ position: [4.1, 3.35, 5.15], fov: 46, near: 0.08, far: 90 }}
+      camera={{ position: [0.2, 4.6, 7.2], fov: 42, near: 0.08, far: 90 }}
       gl={{
         antialias: q.antialias,
         alpha: false,
@@ -888,7 +890,7 @@ export const PlaygroundCanvas = memo(function PlaygroundCanvas() {
         gl.toneMapping = q.uhd ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
         gl.toneMappingExposure = 1.08;
         gl.outputColorSpace = THREE.SRGBColorSpace;
-        scene.fog = new THREE.FogExp2(NEURAL_FOG, 0.048);
+        scene.fog = new THREE.FogExp2(NEURAL_FOG, 0.028);
       }}
       onPointerDown={(e) => {
         tap.current = { x: e.clientX, y: e.clientY, t: performance.now() };

@@ -3,7 +3,7 @@ export const NETWORK_NAME = "The Remote Viewer";
 export const NETWORK_SHORT = "TRV";
 export const MOTTO = "In God We Trust";
 export const NETWORK_TAG =
-  "In God We Trust. A sovereign American watch. Same facts. Two lenses. Neural Link reads the neuron. God's Eye reads exhaust of systems — never bodies.";
+  "In God We Trust. The Remote Viewer Network first — your profile, mesh, and vault on this device. Neural watch is a door. God's Eye reads exhaust of systems — never bodies.";
 export const DECK_NAME = "Command Deck";
 export const THEATER_NEURAL = "Neural Link";
 export const THEATER_ORBIT = "God's Eye";

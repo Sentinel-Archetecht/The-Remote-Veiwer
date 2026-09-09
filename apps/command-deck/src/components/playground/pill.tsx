@@ -91,15 +91,21 @@ export function PillGate() {
         </h1>
         <p className="gateway-rise mt-2 text-center text-sm tracking-[0.18em] text-muted uppercase">How you hear the facts</p>
         <p className="gateway-rise mx-auto mt-2 max-w-sm text-center text-sm leading-relaxed text-muted">
-          Same facts. Two deliveries. Red is the raw wire. Blue is the briefing. Glimpse the other side anytime.
+          Same facts. Two deliveries. Red is the raw wire. Blue is the briefing.
         </p>
-        <div className="gateway-rise gateway-pills mt-6">
+      </div>
+      <div className="gateway-cta">
+        <p className="mb-2 text-center text-xs tracking-[0.16em] text-sage uppercase">Tap a pill to enter</p>
+        <div className="gateway-pills">
           <button
             type="button"
             className="gateway-pill gateway-pill-red"
             aria-label="Take the red pill. Raw wire. Same facts. No frame."
             data-pill-choose="red"
-            onClick={() => choose("red")}
+            onPointerUp={(e) => {
+              e.preventDefault();
+              choose("red");
+            }}
           >
             <span className="gateway-pill-gloss" aria-hidden="true" />
             <span className="relative text-xs font-medium tracking-[0.22em] uppercase">Red pill</span>
@@ -111,7 +117,10 @@ export function PillGate() {
             className="gateway-pill gateway-pill-blue"
             aria-label="Take the blue pill. Briefing. Same facts. Guided."
             data-pill-choose="blue"
-            onClick={() => choose("blue")}
+            onPointerUp={(e) => {
+              e.preventDefault();
+              choose("blue");
+            }}
           >
             <span className="gateway-pill-gloss" aria-hidden="true" />
             <span className="relative text-xs font-medium tracking-[0.22em] uppercase">Blue pill</span>
@@ -119,9 +128,7 @@ export function PillGate() {
             <span className="relative mt-1 text-xs leading-snug text-muted">Guided. Same facts.</span>
           </button>
         </div>
-        <p className="gateway-rise mt-5 text-center text-xs leading-relaxed text-muted">
-          Not two truths. One fact. Two ways it arrives.
-        </p>
+        <p className="mt-2 text-center text-xs leading-relaxed text-muted">Not two truths. One fact. Two ways it arrives.</p>
       </div>
     </div>
   );

@@ -80,6 +80,8 @@ import { RepairPanel } from "./repair";
 import { AffairsChip, AffairsPanel } from "./affairs";
 import { FriendsPanel, ShopPanel, SocialDock, useClaimSocial } from "./social";
 import { LensBar, PillGate, useHydratePill } from "./pill";
+import { NetworkHome } from "@/components/network/home";
+import { useNetwork } from "@/lib/network";
 import { DrillChip, DrillGate, OrderStrip } from "./tutorial";
 import { useDrill } from "@/lib/tutorial";
 import { SpecialistChip, SpecialistPanel } from "./specialist";
@@ -808,11 +810,18 @@ function Header({
   return (
     <header className="pointer-events-none absolute inset-x-0 top-0 z-30 px-2 pt-[max(0.4rem,env(safe-area-inset-top))]">
       <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT}</p>
-          <h1 className="deck-title font-display text-base font-semibold tracking-tight text-foreground">
-            {DECK_NAME}
-          </h1>
+        <div className="pointer-events-auto min-w-0">
+          <button
+            type="button"
+            className="text-left"
+            aria-label="Back to The Remote Viewer Network"
+            onClick={() => useNetwork.getState().setSurface("network")}
+          >
+            <p className="text-[10px] font-medium tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT} Network</p>
+            <h1 className="deck-title font-display text-base font-semibold tracking-tight text-foreground">
+              {DECK_NAME}
+            </h1>
+          </button>
         </div>
         <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg bg-card/85 p-0.5 shadow-[var(--shadow-border)]">
           <Button
@@ -1127,9 +1136,13 @@ export function Playground() {
   useClaimSocial();
   useHydratePill();
   useEffect(() => {
+    useNetwork.getState().hydrate();
+  }, []);
+  useEffect(() => {
     useDrill.getState().hydrate();
   }, []);
   useEffect(() => {
+    if (useNetwork.getState().surface !== "watch") return;
     const id = window.setInterval(() => {
       const s = usePlayground.getState();
       const n = s.bodies.filter((b) => b.role === "threat").length;
@@ -1143,6 +1156,7 @@ export function Playground() {
   const pill = usePill((s) => s.lens);
   const glimpse = usePill((s) => s.glimpse);
   const viewing = viewingLens({ lens: pill, glimpse });
+  const surface = useNetwork((s) => s.surface);
   const phys = physicsProfile(useFieldQuality());
 
   useEffect(() => {
@@ -1274,6 +1288,10 @@ export function Playground() {
         <PillGate />
       </main>
     );
+  }
+
+  if (surface !== "watch") {
+    return <NetworkHome />;
   }
 
   return (
