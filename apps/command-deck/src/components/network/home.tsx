@@ -55,10 +55,10 @@ export function NetworkHome() {
       <header className="sticky top-0 z-20 border-b border-border bg-background/92 px-4 pt-[max(0.7rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md">
         <p className="text-center text-[10px] font-medium tracking-[0.32em] text-sage uppercase">{MOTTO}</p>
         <div className="mt-1 flex items-center justify-between gap-3">
-          <div>
+          <a href="/hub" className="min-w-0">
             <p className="text-[10px] tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT} Network</p>
             <h1 className="font-display text-2xl font-semibold tracking-tight">{NETWORK_NAME}</h1>
-          </div>
+          </a>
           <LicenseMark license={license} />
         </div>
         <LensBar />
@@ -276,11 +276,14 @@ export function NetworkHome() {
           <Button
             variant="solid"
             className="mt-3 w-full"
-            onClick={() => setSurface("watch")}
-            aria-label="Open neural watch"
+            onClick={() => {
+              useNetwork.getState().setSurface("watch");
+              window.location.assign("/hub/deck?door=neural");
+            }}
+            aria-label="Open Neural Link"
           >
             <BrainCircuit className="size-4" strokeWidth={1.75} />
-            Open neural watch
+            Open Neural Link
           </Button>
         </section>
       </div>

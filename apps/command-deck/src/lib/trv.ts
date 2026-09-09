@@ -55,3 +55,35 @@ export const SPECIALIST_TAG =
   "On-device specialist. Names strains, briefs SNAP, reports Affairs. Pair a local node if you host weights. Zero vendor keys.";
 export const LIFE_TAG =
   "Each Viewer owns this life. The key, rank, seizes, and lens live on the device. Take a PIN wrap. Carry it. Destroy a copy. X is a name, not ownership.";
+export const HUB_MAP = [
+  {
+    to: "/",
+    title: "Network",
+    line: "Home after the pill. Profile, mesh, vault. You own this life.",
+    door: "network",
+  },
+  {
+    to: "/hub/deck?door=neural",
+    title: "Neural Link",
+    line: "Walk the neuron. THC on watch. HSV, West Nile, rabies.",
+    door: "neural",
+  },
+  {
+    to: "/hub/deck?door=orbit",
+    title: "God's Eye",
+    line: "Orbit. Exhaust of systems. Never bodies.",
+    door: "orbit",
+  },
+  {
+    to: "/hub/deck",
+    title: "Command Deck",
+    line: "The watch. Neural Link first. God's Eye after the neuron is named.",
+    door: "deck",
+  },
+  {
+    to: "/?gate=1",
+    title: "Gateway",
+    line: "Eye. Red or Blue. Same facts. Two deliveries.",
+    door: "gateway",
+  },
+] as const;

@@ -797,10 +797,10 @@ function Header({
   const learned = useProgress((s) => s.learned);
   const osN = learnedCount(learned);
   const osName = osTitle(learned);
-  const heldSynapse = useAffairs((s) => s.held.synapse);
+  const heldNeural = useAffairs((s) => s.held.neural);
   const heldOrbit = useAffairs((s) => s.held.orbit);
   const heldAffairs = useAffairs((s) => s.held.affairs);
-  const freezeNeural = heldSynapse || heldAffairs;
+  const freezeNeural = heldNeural || heldAffairs;
   const freezeOrbit = heldOrbit || heldAffairs;
   const neuralNamed =
     isLearned(learned, "neural-sphere") &&
@@ -815,7 +815,10 @@ function Header({
             type="button"
             className="text-left"
             aria-label="Back to The Remote Viewer Network"
-            onClick={() => useNetwork.getState().setSurface("network")}
+            onClick={() => {
+              useNetwork.getState().setSurface("network");
+              if (window.location.pathname.includes("/hub")) window.location.assign("/");
+            }}
           >
             <p className="text-[10px] font-medium tracking-[0.22em] text-muted uppercase">{NETWORK_SHORT} Network</p>
             <h1 className="deck-title font-display text-base font-semibold tracking-tight text-foreground">
@@ -1137,6 +1140,12 @@ export function Playground() {
   useHydratePill();
   useEffect(() => {
     useNetwork.getState().hydrate();
+    const path = window.location.pathname;
+    const door = new URLSearchParams(window.location.search).get("door");
+    if (path.includes("/hub/deck") || door === "neural" || door === "orbit") {
+      useNetwork.getState().setSurface("watch");
+      usePlayground.getState().setTheater(door === "orbit" ? "orbit" : "neural");
+    }
   }, []);
   useEffect(() => {
     useDrill.getState().hydrate();

@@ -511,7 +511,7 @@ export const usePlayground = create<PlaygroundState>((set, get) => ({
     const { theater, bodies, grabbing } = get();
     if (grabbing) return false;
     if (!assertOsAllowed(theater)) {
-      if (isTopicHeld("os") || isTopicHeld("affairs") || isTopicHeld(theater === "orbit" ? "orbit" : "synapse")) {
+      if (isTopicHeld("os") || isTopicHeld("affairs") || isTopicHeld(theater === "orbit" ? "orbit" : "neural")) {
         set({ briefing: note("Internal Affairs holds Sentinel OS. Strike frozen.", get().briefing) });
       }
       return false;
