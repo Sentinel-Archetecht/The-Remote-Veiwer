@@ -17,7 +17,7 @@
     "expo": "~57.0.19",
     "expo-camera": "~57.0.4",
     "expo-crypto": "~15.0.0",
-    "expo-secure-store": "~15.0.0",
+    "expo-secure-store": "~57.0.3",
     "expo-speech": "~57.0.2",
     "expo-speech-recognition": "^56.0.1",
     "expo-status-bar": "~57.0.1",
