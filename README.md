@@ -36,10 +36,37 @@ Shipped on the hub:
 - Command, OS, live, people, make, rails, Citizen lock (on-device hash)
 - **OS jack-in** — 3D neuron flight on Defend / OS. Scan, name, pulse. Catalog writes OS memory. A landed pulse counts as daily watch.
 - **Sovereign node runtime** — `/hub/node`: local Ed25519 identity, nonce attestation, button-press orchestrator, SHA-256 zkML receipt. Desktop twin is `desktop/src/runtime`.
+- **Hybrid post-quantum wallet** — on-device identity now supports classical Ed25519 **plus** NIST FIPS 204 ML-DSA-65 (Dilithium) for quantum resistance. See below.
 
 `apps/web` is the **old Vite scaffold**. Do not treat it as the product UI.
 
 The hub is a **hosted** Viewer surface (Better Auth + Postgres). It does **not** replace the local-first optical / Path B node, and it is **not** company recovery of age keys. Destroy = Restart still holds on the local path.
+
+### Hybrid Post-Quantum Wallet (Ed25519 + ML-DSA-65)
+
+The on-device Viewer wallet (`apps/hub/src/lib/trv/wallet-client.ts`) is **hybrid**:
+
+| Layer | Algorithm | Purpose |
+|-------|-----------|---------|
+| Classical | Ed25519 | Solana compatibility, existing vaults, Web Crypto |
+| Post-quantum | ML-DSA-65 (NIST FIPS 204 / Dilithium) | Quantum resistance |
+
+- Both key pairs are **deterministically derived** from the same 32-byte seed.
+- New wallets are created as `hybrid` by default.
+- Existing Ed25519 / hash-v1 vaults remain fully functional and can be upgraded with `upgradeVaultToHybrid()`.
+- `signHelmProof()` produces dual signatures on hybrid vaults (`signature` + `pqSignature` / `pqPubkey`).
+- Seed never leaves the browser; it is stored encrypted under a PIN-derived AES-GCM key in IndexedDB.
+- Implementation uses the audited pure-JS library `@noble/post-quantum`.
+
+**Verify locally (Termux / desktop):**
+
+```bash
+cd apps/hub
+npm install
+node --test scripts/wallet-hybrid.test.mjs
+```
+
+All six hybrid tests (classical regression + ML-DSA-65 + dual signature) should pass.
 
 ---
 
@@ -132,6 +159,7 @@ Prefer [`docs/REALITY.md`](docs/REALITY.md) and [`STATUS.md`](STATUS.md) over an
 | Capability | Notes |
 |------------|-------|
 | **Viewer Hub DApp** | **LIVE** — [`apps/hub`](apps/hub) · briefing · daily watch · OS jack-in (source; live after republish) · `/hub/node` sovereign runtime (source; live after republish) · profile vault |
+| **Hybrid post-quantum wallet** | **LIVE** (source) — Ed25519 + NIST ML-DSA-65 · dual signatures · upgrade path for existing vaults · verified on-device |
 | Optical air-gap | PROVEN (see REALITY) |
 | Digital vending Path B | PROVEN |
 | Solana `trv_governance` | **SCAFFOLD** — CI build gate |
