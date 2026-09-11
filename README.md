@@ -58,15 +58,39 @@ The on-device Viewer wallet (`apps/hub/src/lib/trv/wallet-client.ts`) is **hybri
 - Seed never leaves the browser; it is stored encrypted under a PIN-derived AES-GCM key in IndexedDB.
 - Implementation uses the audited pure-JS library `@noble/post-quantum`.
 
-**Verify locally (Termux / desktop):**
+#### Verification steps (Termux or desktop)
+
+Run these commands to confirm the hybrid wallet is present and functioning:
 
 ```bash
+# 1. Enter the Hub app directory
 cd apps/hub
+
+# 2. Install dependencies (includes @noble/post-quantum)
 npm install
+
+# 3. Optional but recommended: check for known vulnerabilities
+npm audit
+# If any high-severity issues appear:
+npm audit fix
+
+# 4. Confirm the post-quantum package is installed
+npm list @noble/post-quantum
+
+# 5. Run the hybrid wallet test suite
 node --test scripts/wallet-hybrid.test.mjs
 ```
 
-All six hybrid tests (classical regression + ML-DSA-65 + dual signature) should pass.
+**Expected result:** all six tests pass:
+
+- Ed25519 pubkey is 32 bytes and deterministic
+- Ed25519 sign + verify
+- ML-DSA-65 keygen is deterministic from 32-byte seed
+- ML-DSA-65 sign + verify
+- Hybrid: same seed yields independent classical + PQ keys
+- Hybrid dual signature round-trip
+
+If every test shows a green checkmark and the summary reports `pass 6` / `fail 0`, the hybrid post-quantum wallet layer is verified on that device.
 
 ---
 
