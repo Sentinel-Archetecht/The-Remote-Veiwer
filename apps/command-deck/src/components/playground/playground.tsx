@@ -81,7 +81,9 @@ import { AffairsChip, AffairsPanel } from "./affairs";
 import { FriendsPanel, ShopPanel, SocialDock, useClaimSocial } from "./social";
 import { LensBar, PillGate, useHydratePill } from "./pill";
 import { NetworkHome } from "@/components/network/home";
+import { LockGate } from "@/components/network/lock";
 import { useNetwork } from "@/lib/network";
+import { markSessionOpen, sessionOpen } from "@/lib/biometric";
 import { DrillChip, DrillGate, OrderStrip } from "./tutorial";
 import { useDrill } from "@/lib/tutorial";
 import { SpecialistChip, SpecialistPanel } from "./specialist";
@@ -1162,6 +1164,7 @@ export function Playground() {
   useEffect(() => {
     useSpecialist.getState().hydrate();
   }, []);
+  const [unlocked, setUnlocked] = useState(() => (typeof window === "undefined" ? false : sessionOpen()));
   const pill = usePill((s) => s.lens);
   const glimpse = usePill((s) => s.glimpse);
   const viewing = viewingLens({ lens: pill, glimpse });
@@ -1296,6 +1299,17 @@ export function Playground() {
       <main className="relative h-dvh w-full overflow-hidden bg-background text-foreground" data-gateway="1">
         <PillGate />
       </main>
+    );
+  }
+
+  if (!unlocked) {
+    return (
+      <LockGate
+        onOpen={() => {
+          markSessionOpen();
+          setUnlocked(true);
+        }}
+      />
     );
   }
 
