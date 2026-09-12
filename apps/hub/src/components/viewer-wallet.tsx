@@ -1,6 +1,28 @@
+async function unlockWithBiometric() {
+    setBusy(true);
+    try {
+      const gate = await gateVaultUnlock("Unlock Viewer wallet");
+      if (!gate.ok) {
+        if (gate.reason === "cancelled") {
+          toast.message("Biometric cancelled.");
+        } else {
+          toast.message("Biometrics unavailable — use PIN.");
+        }
+        return;
+      }
+      // Biometric UV succeeded. PIN still decrypts the vault (current design).
+      toast.message("Biometric verified. Enter PIN to release the vault.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Biometric unlock failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+import { gateVaultUnlock } from "@/lib/trv/biometric-gate";
 import { useEffect, useState } from "react";
 import { KeyRound, Lock, Unlock, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { gateVaultUnlock } from "@/lib/trv/biometric-gate";
 import { useViewer } from "./viewer-context";
 import { bindPhantomPubkey, bindWalletPubkey } from "@/lib/trv/server";
 import {
@@ -105,6 +127,29 @@ export function WalletDock() {
     }
   }
 
+
+  async function unlockWithBiometric() {
+    setBusy(true);
+    try {
+      const gate = await gateVaultUnlock("Unlock Viewer wallet");
+      if (!gate.ok) {
+        if (gate.reason === "cancelled") {
+          toast.message("Biometric cancelled.");
+        } else {
+          toast.message("Biometrics unavailable – use PIN.");
+        }
+        return;
+      }
+      // Biometric UV succeeded. PIN still decrypts the vault (current design).
+      toast.message("Biometric verified. Enter PIN to release the vault.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Biometric unlock failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
   async function upgrade() {
     setBusy(true);
     try {
@@ -154,6 +199,34 @@ export function WalletDock() {
   }
 
   return (
+) : (
+            <div className="mt-4 space-y-2">
+              <Button
+                className="w-full"
+                disabled={busy}
+                onClick={() => void unlockWithBiometric()}
+              >
+                Unlock with biometrics
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">or use PIN</p>
+              <Label htmlFor="upin">Unlock PIN</Label>
+              <Input
+                id="upin"
+                type="password"
+                value={pin}
+                onChange={(e) => setPin(e.target.value)}
+                autoComplete="current-password"
+              />
+              <Button
+                className="w-full"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void unlock()}
+              >
+                Unlock with PIN
+              </Button>
+            </div>
+          )}
     <>
       <div className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] left-3 z-30 hidden md:bottom-auto md:top-1/2 md:block md:-translate-y-1/2">
         <button
@@ -254,6 +327,14 @@ export function WalletDock() {
             </div>
           ) : (
             <div className="mt-4 space-y-2">
+              <Button
+                className="w-full"
+                disabled={busy}
+                onClick={() => void unlockWithBiometric()}
+              >
+                Unlock with biometrics
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">or use PIN</p>
               <Label htmlFor="upin">Unlock PIN</Label>
               <Input
                 id="upin"
@@ -262,8 +343,13 @@ export function WalletDock() {
                 onChange={(e) => setPin(e.target.value)}
                 autoComplete="current-password"
               />
-              <Button className="w-full" disabled={busy} onClick={() => void unlock()}>
-                Unlock
+              <Button
+                className="w-full"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => void unlock()}
+              >
+                Unlock with PIN
               </Button>
             </div>
           )}

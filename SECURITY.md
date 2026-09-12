@@ -2,7 +2,7 @@
 
 ## Project Purpose
 
-This repository contains The Remote Viewer / Sentinel Security Protocol — local-first, zero-custody, optical air-gap systems and related scaffolds. Design prioritizes user-held keys and no centralized backdoors.
+This repository contains The Remote Viewer — a local-first, zero-custody, optical air-gap system and related scaffolds. Design prioritizes user-held keys and no centralized backdoors. The security service that protects the Viewer Hub runs behind the product and is not the public name.
 
 ## Supported Versions
 
@@ -50,3 +50,18 @@ Acknowledgment target: 72 hours. High-severity mitigation plan target: 14 days.
 ## Contact
 
 Private GitHub Security Advisories or maintainer encrypted channels listed with the project.
+
+## Federal / open-source cyber baselines (glass — not LIVE authorization)
+
+House **defend-only** posture. Tracking public baselines; **not** a DoD ATO, FedRAMP, or CISA certification claim.
+
+| Source | Use |
+|--------|-----|
+| [DoD CIO OSS memo](https://dodcio.defense.gov/Portals/0/Documents/Library/SoftwareDev-OpenSource.pdf) | Component security, integrity, timely vuln remediation |
+| [DoD Enterprise DevSecOps Fundamentals](https://dodcio.defense.gov/Portals/0/Documents/Library/DoD%20Enterprise%20DevSecOps%20Fundamentals%20v2.5.pdf) | SAST/SCA gates in CI; two-person integrity where practical |
+| [CISA Secure by Design](https://www.cisa.gov/securebydesign) | Secure defaults, memory-safe roadmaps, responsible OSS |
+| [OpenSSF OSPS Baseline](https://baseline.openssf.org/) | Practical OSS control checklist by maturity |
+
+Repo controls: secret scanning + push protection, Dependabot security updates, CodeQL, vulnerability alerts, private advisory reporting, branch protection on `TheRemoteViewer` (required `build-solana`, no force-push). Hydra (Department of War) owns defend framing; Integrity blocks LIVE invent.
+
+Tracking: issue **Security sync (glass)**.
