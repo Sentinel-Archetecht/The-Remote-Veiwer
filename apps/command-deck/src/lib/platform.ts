@@ -22,11 +22,11 @@ export type FieldQuality = {
 };
 
 const DESKTOP: FieldQuality = {
-  dpr: [1, 1.75],
-  pixelRatio: 1.75,
+  dpr: [1, 1.5],
+  pixelRatio: 1.5,
   shadows: "percentage",
   shadowMap: 1024,
-  stars: 2200,
+  stars: 900,
   antialias: true,
   power: "high-performance",
   coarse: false,
@@ -43,13 +43,14 @@ function connection(): Conn | undefined {
   return (navigator as Navigator & { connection?: Conn }).connection;
 }
 
-export function capPixelRatio(cssW: number, cssH: number, device: number, uhd: boolean) {
+export function capPixelRatio(cssW: number, cssH: number, device: number, uhd: boolean, cheap = false) {
   const long = Math.max(cssW, cssH, 1);
   if (uhd) {
     return Math.max(1, Math.min(UHD_WIDTH / long, 3));
   }
+  if (cheap) return 1;
   const d = Number.isFinite(device) && device > 0 ? device : 1;
-  return Math.max(1, Math.min(d, 1920 / long, 1.75));
+  return Math.max(1, Math.min(d, 1920 / long, 1.5));
 }
 
 export function displayCapable(width = 0, height = 0, device = 1) {
@@ -125,15 +126,15 @@ export function readFieldQuality(forced?: boolean | null): FieldQuality {
   const capable = displayCapable(window.screen?.width || cssW, window.screen?.height || cssH, device);
   const want = forced === undefined ? useQualityPref.getState().forced : forced;
   const uhd = resolveUhd({ capable, coarse, power: low ? "low-power" : "high-performance" }, want);
-  const pixelRatio = capPixelRatio(cssW, cssH, device, uhd);
+  const pixelRatio = capPixelRatio(cssW, cssH, device, uhd, low);
   const pixels = Math.round(cssW * pixelRatio) * Math.round(cssH * pixelRatio);
   return {
-    dpr: uhd ? [1, pixelRatio] : low ? [1, 1.25] : DESKTOP.dpr,
+    dpr: uhd ? [1, pixelRatio] : low ? [1, 1] : DESKTOP.dpr,
     pixelRatio,
-    shadows: saveData || cores <= 2 ? false : "percentage",
-    shadowMap: uhd ? 2048 : low ? 512 : 1024,
-    stars: uhd ? 4800 : low ? 800 : DESKTOP.stars,
-    antialias: uhd || !low,
+    shadows: uhd ? "percentage" : false,
+    shadowMap: uhd ? 2048 : 512,
+    stars: uhd ? 2400 : low ? 80 : 500,
+    antialias: uhd,
     power: uhd ? "high-performance" : low ? "low-power" : "high-performance",
     coarse,
     uhd,
@@ -179,4 +180,18 @@ export function useFieldQuality() {
     };
   }, [forced]);
   return q;
+}
+
+const DESK_HUD = "(min-width: 1100px) and (pointer: fine) and (hover: hover)";
+
+export function useDeskHud() {
+  const [desk, setDesk] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(DESK_HUD);
+    const apply = () => setDesk(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return desk;
 }

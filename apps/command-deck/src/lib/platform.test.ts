@@ -15,8 +15,8 @@ describe("4K field", () => {
     assert.ok(Math.abs(1280 * on1280 - 3840) < 1);
     const native4k = capPixelRatio(3840, 2160, 1, true);
     assert.equal(native4k, 1);
-    const phone = capPixelRatio(390, 844, 3, false);
-    assert.ok(phone <= 1.75);
+    const phone = capPixelRatio(390, 844, 3, false, true);
+    assert.equal(phone, 1);
   });
 
   it("treats a 2560-class display as 4K-capable and keeps phones on field maps", () => {

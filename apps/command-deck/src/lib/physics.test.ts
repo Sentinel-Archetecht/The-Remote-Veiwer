@@ -47,7 +47,7 @@ describe("physics profile", () => {
     assert.equal(field.timeStep, PHYSICS_STEP);
     assert.equal(PHYSICS_STEP, 1 / 60);
     assert.equal(deck.interpolate, true);
-    assert.equal(field.interpolate, true);
+    assert.equal(field.interpolate, false);
   });
 
   it("scales solver and geometry down on the field band", () => {
@@ -56,17 +56,17 @@ describe("physics profile", () => {
     const deck = physicsProfile(DECK_Q);
     const field = physicsProfile(FIELD_Q);
     assert.ok(field.solver <= deck.solver);
-    assert.equal(field.solver, 4);
+    assert.equal(field.solver, 2);
     assert.equal(deck.solver, 5);
     assert.equal(field.pgs, 1);
     assert.equal(deck.pgs, 1);
-    assert.equal(field.forceEvery, 2);
+    assert.equal(field.forceEvery, 3);
     assert.equal(deck.forceEvery, 1);
     assert.equal(field.ornament, false);
     assert.equal(deck.ornament, true);
     assert.ok(field.sphere[0] < deck.sphere[0]);
     assert.ok(field.earth[0] < deck.earth[0]);
-    assert.match(physicsLine(field), /Rapier field 4\/1/);
+    assert.match(physicsLine(field), /Rapier field 2\/1/);
   });
 
   it("keeps CCD off in Neural Link and on in God's Eye", () => {
@@ -75,7 +75,7 @@ describe("physics profile", () => {
     assert.equal(ccdFor("neural", deck), false);
     assert.equal(ccdFor("neural", field), false);
     assert.equal(ccdFor("orbit", deck), true);
-    assert.equal(ccdFor("orbit", field), true);
+    assert.equal(ccdFor("orbit", field), false);
     assert.equal(deck.ccdNeural, false);
     assert.equal(deck.maxCcdSubsteps, 1);
   });

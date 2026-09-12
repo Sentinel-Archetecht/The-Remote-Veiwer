@@ -1,4 +1,4 @@
-import { createContext, Suspense, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, memo, Suspense, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { ContactShadows, OrbitControls, Stars, useTexture } from "@react-three/drei";
 import {
@@ -34,7 +34,11 @@ import {
 } from "@/lib/physics";
 import { bindFieldCanvas } from "@/lib/capture";
 
-const NEURAL_FOG = "#140a0c";
+const huntBodies = new Map<
+  number,
+  { role: SpawnedBody["role"]; kind: SpawnedBody["kind"]; rb: RapierRigidBody }
+>();
+const NEURAL_FOG = "#1a0c0e";
 const ORBIT_FOG = "#020308";
 const _up = new THREE.Vector3(0, 1, 0);
 
@@ -103,6 +107,39 @@ function useDeckTex() {
   const t = useContext(TexCtx);
   if (!t) throw new Error("textures");
   return t;
+}
+
+function paintTex(hex: string) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  if (g) {
+    g.fillStyle = hex;
+    g.fillRect(0, 0, 64, 64);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.needsUpdate = true;
+  return t;
+}
+
+function FallbackDeckTex({ children }: { children: ReactNode }) {
+  const tex = useMemo<DeckTex>(
+    () => ({
+      cortex: paintTex("#c4897a"),
+      lesion: paintTex("#8a3a32"),
+      skull: paintTex("#e8d8c8"),
+      virus: paintTex("#c45c4a"),
+      helix: paintTex("#7d9a7e"),
+      earth: paintTex("#3a6a9a"),
+    }),
+    [],
+  );
+  return <TexCtx.Provider value={tex}>{children}</TexCtx.Provider>;
+}
+
+function TexErrorBoundary({ children }: { children: ReactNode; fallback?: ReactNode }) {
+  return <>{children}</>;
 }
 
 function usePhys() {
@@ -198,7 +235,7 @@ function Spikes({ radius, color }: { radius: number; color: string }) {
       {SPIKES.map((s, i) => (
         <mesh key={i} position={s.dir.clone().multiplyScalar(radius * 0.9)} quaternion={s.quat}>
           <coneGeometry args={[radius * 0.15, radius * 0.4, 6]} />
-          <meshPhysicalMaterial color={color} roughness={0.34} metalness={0.22} clearcoat={0.35} />
+          <meshStandardMaterial color={color} roughness={0.34} metalness={0.22} clearcoat={0.35} />
         </mesh>
       ))}
     </>
@@ -211,7 +248,7 @@ function FlaviKnobs({ radius, color }: { radius: number; color: string }) {
       {ICO_VERTS.map((v, i) => (
         <mesh key={i} position={[v.x * radius * 1.04, v.y * radius * 1.04, v.z * radius * 1.04]}>
           <sphereGeometry args={[radius * 0.15, 8, 6]} />
-          <meshPhysicalMaterial color={color} roughness={0.28} metalness={0.12} clearcoat={0.45} />
+          <meshStandardMaterial color={color} roughness={0.28} metalness={0.12} clearcoat={0.45} />
         </mesh>
       ))}
     </>
@@ -271,21 +308,23 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
       <group>
         <mesh castShadow receiveShadow>
           {orbit ? <octahedronGeometry args={[r, 0]} /> : <sphereGeometry args={[r, segs[0], segs[1]]} />}
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             color={color}
             roughness={sentinel ? 0.22 : orbit ? 0.18 : 0.28}
             metalness={sentinel ? 0.08 : orbit ? 0.42 : 0.14}
-            clearcoat={0.55}
-            clearcoatRoughness={0.24}
-            bumpMap={orbit ? undefined : virus}
-            bumpScale={orbit ? 0 : 0.07}
+            bumpMap={orbit || !ornament ? undefined : virus}
+            bumpScale={orbit || !ornament ? 0 : 0.07}
             emissive={color}
             emissiveIntensity={nowEmissive(sentinel ? 0.35 : orbit ? 0.22 : 0.08, now && !sentinel, wait && !sentinel)}
-            sheen={orbit ? 0 : 0.4}
-            sheenColor={color}
           />
         </mesh>
         {sentinel || !ornament ? null : <Spikes radius={r} color={color} />}
+        {sentinel ? (
+          <mesh>
+            <sphereGeometry args={[r * 1.55, 16, 12]} />
+            <meshBasicMaterial color="#d4b05a" transparent opacity={0.16} depthWrite={false} />
+          </mesh>
+        ) : null}
         {known ? <KnownRing radius={r} /> : null}
       </group>
     );
@@ -298,7 +337,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
         <group>
           <mesh castShadow receiveShadow>
             <boxGeometry args={[s, s * 0.55, s]} />
-            <meshPhysicalMaterial
+            <meshStandardMaterial
               color={color}
               roughness={0.38}
               metalness={0.22}
@@ -316,7 +355,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
       <group>
         <mesh castShadow receiveShadow>
           <sphereGeometry args={[capsid, segs[0], segs[1]]} />
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             color={color}
             roughness={0.26}
             metalness={0.08}
@@ -332,7 +371,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
         {ornament ? (
           <mesh>
             <sphereGeometry args={[capsid * 1.32, segs[0], segs[1]]} />
-            <meshPhysicalMaterial
+            <meshStandardMaterial
               color={color}
               transparent
               opacity={0.2}
@@ -354,7 +393,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
       <group>
         <mesh castShadow receiveShadow>
           <cylinderGeometry args={[CYL_RADIUS * scale, CYL_RADIUS * scale * 0.86, CYL_HEIGHT * scale, segs[0]]} />
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             color={color}
             roughness={0.28}
             metalness={0.45}
@@ -374,7 +413,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
     <group>
       <mesh castShadow receiveShadow>
         <cylinderGeometry args={[br * 0.22, br, h * 0.78, Math.max(12, segs[0] - 6)]} />
-        <meshPhysicalMaterial
+        <meshStandardMaterial
           color={color}
           map={helix}
           roughness={0.34}
@@ -386,7 +425,7 @@ function ShapeVisual({ body }: { body: SpawnedBody }) {
       </mesh>
       <mesh castShadow receiveShadow position={[0, -h * 0.32, 0]}>
         <sphereGeometry args={[br, Math.max(12, segs[0] - 6), segs[1]]} />
-        <meshPhysicalMaterial
+        <meshStandardMaterial
           color={color}
           roughness={0.3}
           metalness={0.1}
@@ -447,6 +486,16 @@ function Body({ body, restitution }: { body: SpawnedBody; restitution: number })
   const phys = usePhys();
   const neural = theater === "neural";
   const threat = body.role === "threat";
+  const sentinel = body.role === "sentinel";
+
+  useFrame(() => {
+    const rb = ref.current;
+    if (!rb) return;
+    huntBodies.set(body.id, { role: body.role, kind: body.kind, rb });
+  });
+  useEffect(() => () => {
+    huntBodies.delete(body.id);
+  }, [body.id]);
 
   return (
     <RigidBody
@@ -456,11 +505,11 @@ function Body({ body, restitution }: { body: SpawnedBody; restitution: number })
       colliders={false}
       restitution={neural ? Math.min(restitution, 0.2) : restitution}
       friction={neural ? 0.1 : 0.72}
-      linearDamping={neural ? 1.65 : 0.14}
+      linearDamping={neural ? (sentinel ? 0.85 : 1.65) : 0.14}
       angularDamping={neural ? 1.35 : 0.2}
-      gravityScale={neural ? 0.42 : 1}
+      gravityScale={neural ? (sentinel ? 0.12 : 0.42) : 1}
       ccd={ccdFor(theater, phys)}
-      canSleep={neural}
+      canSleep={neural && !sentinel}
     >
       <BodyCollider body={body} restitution={restitution} neural={neural} />
       <group
@@ -472,14 +521,15 @@ function Body({ body, restitution }: { body: SpawnedBody; restitution: number })
         }}
         onPointerDown={(e: ThreeEvent<PointerEvent>) => {
           tap.current = { x: e.clientX, y: e.clientY };
+          e.stopPropagation();
         }}
         onPointerUp={(e: ThreeEvent<PointerEvent>) => {
           const dx = e.clientX - tap.current.x;
           const dy = e.clientY - tap.current.y;
-          if (dx * dx + dy * dy > 144) return;
+          if (dx * dx + dy * dy > 2500) return;
           e.stopPropagation();
           if (body.role !== "threat") return;
-          usePlayground.getState().markSeize(body.id);
+          usePlayground.getState().markTarget(body.id);
         }}
       >
         <NowPulse active={now && threat}>
@@ -521,7 +571,7 @@ function NeuralArena() {
         <CuboidCollider args={[0.2, 4, 11]} position={[11.1, 2.6, 0]} />
         <mesh position={[0, 0.22, 0]} receiveShadow>
           <boxGeometry args={[12, 0.5, 12]} />
-          <meshPhysicalMaterial
+          <meshStandardMaterial
             map={cortex}
             roughness={0.38}
             metalness={0.03}
@@ -534,7 +584,7 @@ function NeuralArena() {
           return (
             <mesh key={i} position={g.p} castShadow receiveShadow>
               <sphereGeometry args={[g.r, phys.gyri[0], phys.gyri[1]]} />
-              <meshPhysicalMaterial
+              <meshStandardMaterial
                 map={sick ? lesion : cortex}
                 roughness={sick ? 0.5 : 0.32}
                 metalness={0.03}
@@ -564,18 +614,20 @@ function NeuralArena() {
         </mesh>
       </RigidBody>
 
-      <mesh position={[0, 2.55, 0]} scale={[1, 0.8, 1]} renderOrder={2}>
-        <sphereGeometry args={[8.7, phys.csf[0], phys.csf[1]]} />
-        <meshPhysicalMaterial
-          color="#8ebbb4"
-          transparent
-          opacity={0.08}
-          roughness={0.14}
-          metalness={0}
-          side={THREE.BackSide}
-          depthWrite={false}
-        />
-      </mesh>
+      {phys.ornament ? (
+        <mesh position={[0, 2.55, 0]} scale={[1, 0.8, 1]} renderOrder={2}>
+          <sphereGeometry args={[8.7, phys.csf[0], phys.csf[1]]} />
+          <meshStandardMaterial
+            color="#8ebbb4"
+            transparent
+            opacity={0.08}
+            roughness={0.14}
+            metalness={0}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
+        </mesh>
+      ) : null}
 
       <mesh position={[0, 3.1, 0]} scale={[1, 0.84, 1]}>
         <sphereGeometry args={[9.6, phys.skull[0], phys.skull[1]]} />
@@ -596,28 +648,26 @@ function NeuralArena() {
 }
 
 function NeuralLights() {
+  const shadows = useFieldQuality().shadows;
   const map = useFieldQuality().shadowMap;
   return (
     <>
-      <hemisphereLight args={["#f0c4b0", "#2a1214", 0.72]} />
-      <ambientLight intensity={0.3} />
+      <hemisphereLight args={["#f0c4b0", "#2a1214", 1.15]} />
+      <ambientLight intensity={0.72} />
       <directionalLight
         position={[5, 9, 4]}
-        intensity={1.45}
+        intensity={1.55}
         color="#ffd8c8"
-        castShadow
-        shadow-mapSize={[map, map]}
-        shadow-camera-near={1}
-        shadow-camera-far={36}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-        shadow-bias={-0.0002}
+        castShadow={Boolean(shadows)}
+        shadow-mapSize={shadows ? [map, map] : [256, 256]}
       />
-      <pointLight position={[2.1, 3.2, 1.1]} intensity={1.15} distance={11} color="#c45c4a" />
-      <pointLight position={[-2.4, 2.6, -1.2]} intensity={0.7} distance={9} color="#7d9a7e" />
-      <pointLight position={[0, 5.2, 0]} intensity={0.55} distance={12} color="#f0e0d0" />
+      <pointLight position={[0.4, 5.2, 3.4]} intensity={1.4} distance={16} color="#ffc4a8" />
+      {shadows ? (
+        <>
+          <pointLight position={[2.1, 3.2, 1.1]} intensity={1.15} distance={11} color="#c45c4a" />
+          <pointLight position={[-2.4, 2.6, -1.2]} intensity={0.7} distance={9} color="#7d9a7e" />
+        </>
+      ) : null}
     </>
   );
 }
@@ -647,26 +697,19 @@ function Earth() {
 }
 
 function OrbitLights() {
+  const shadows = useFieldQuality().shadows;
   const map = useFieldQuality().shadowMap;
   return (
     <>
-      <hemisphereLight args={["#c5d2e6", "#020308", 0.32]} />
-      <ambientLight intensity={0.1} />
+      <hemisphereLight args={["#c5d2e6", "#020308", 0.45]} />
+      <ambientLight intensity={0.18} />
       <directionalLight
         position={[9, 4.5, 6]}
-        intensity={2.35}
+        intensity={2.1}
         color="#fff4e4"
-        castShadow
-        shadow-mapSize={[map, map]}
-        shadow-camera-near={1}
-        shadow-camera-far={40}
-        shadow-camera-left={-8}
-        shadow-camera-right={8}
-        shadow-camera-top={8}
-        shadow-camera-bottom={-8}
-        shadow-bias={-0.0002}
+        castShadow={Boolean(shadows)}
+        shadow-mapSize={shadows ? [map, map] : [256, 256]}
       />
-      <directionalLight position={[-8, -2, -4]} intensity={0.22} color="#7d9a7e" />
     </>
   );
 }
@@ -685,7 +728,7 @@ function SceneTint() {
     if (theater === "neural") {
       const fog = now ? "#2a0c0c" : wait ? "#0c1014" : NEURAL_FOG;
       gl.setClearColor(fog, 1);
-      scene.fog = new THREE.FogExp2(fog, 0.052 - heal * 0.01 + (wait ? 0.018 : 0));
+      scene.fog = new THREE.FogExp2(fog, 0.028 - heal * 0.006 + (wait ? 0.01 : 0));
     } else {
       const fog = now ? "#140606" : wait ? "#030508" : ORBIT_FOG;
       gl.setClearColor(fog, 1);
@@ -699,9 +742,13 @@ function CameraRig() {
   const theater = usePlayground((s) => s.theater);
   const { camera } = useThree();
   useEffect(() => {
-    if (theater === "neural") camera.position.set(4.1, 3.35, 5.15);
+    if (theater === "neural") camera.position.set(0.2, 4.6, 7.2);
     else camera.position.set(6.8, 2.8, 8.0);
   }, [theater, camera]);
+  return null;
+}
+
+function ThcHunt() {
   return null;
 }
 
@@ -783,6 +830,7 @@ function World() {
         {neural ? <NeuralArena /> : <Earth />}
         {neural ? null : <Stars radius={48} depth={24} count={q.stars} factor={3.2} saturation={0} fade speed={0.35} />}
         <FieldForces />
+        <ThcHunt />
         <SentinelOs />
         <Bodies />
         <OrbitControls
@@ -796,8 +844,8 @@ function World() {
           target={neural ? [0, 1.15, 0] : [0, 0, 0]}
           minPolarAngle={neural ? 0.28 : 0.12}
           maxPolarAngle={neural ? Math.PI / 2 - 0.08 : Math.PI - 0.18}
-          minDistance={neural ? 2.0 : 4.8}
-          maxDistance={neural ? 10 : 22}
+          minDistance={neural ? 4.2 : 4.8}
+          maxDistance={neural ? 12 : 22}
           rotateSpeed={q.coarse ? 0.72 : 1}
           touches={{
             ONE: THREE.TOUCH.ROTATE,
@@ -809,7 +857,7 @@ function World() {
   );
 }
 
-export function PlaygroundCanvas() {
+export const PlaygroundCanvas = memo(function PlaygroundCanvas() {
   const q = useFieldQuality();
   const tap = useRef({ x: 0, y: 0, t: 0 });
   useEffect(() => {
@@ -826,16 +874,23 @@ export function PlaygroundCanvas() {
   return (
     <Canvas
       shadows={q.shadows}
-      dpr={q.pixelRatio}
-      camera={{ position: [4.1, 3.35, 5.15], fov: 46, near: 0.08, far: 90 }}
-      gl={{ antialias: q.antialias, alpha: false, powerPreference: q.power }}
+      dpr={q.dpr}
+      performance={{ min: 0.4, max: 1, debounce: 200 }}
+      camera={{ position: [0.2, 4.6, 7.2], fov: 42, near: 0.08, far: 90 }}
+      gl={{
+        antialias: q.antialias,
+        alpha: false,
+        powerPreference: q.power,
+        stencil: false,
+        depth: true,
+      }}
       onCreated={({ gl, scene }) => {
         bindFieldCanvas(gl.domElement);
         gl.setClearColor(NEURAL_FOG, 1);
-        gl.toneMapping = THREE.ACESFilmicToneMapping;
+        gl.toneMapping = q.uhd ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
         gl.toneMappingExposure = 1.08;
         gl.outputColorSpace = THREE.SRGBColorSpace;
-        scene.fog = new THREE.FogExp2(NEURAL_FOG, 0.048);
+        scene.fog = new THREE.FogExp2(NEURAL_FOG, 0.028);
       }}
       onPointerDown={(e) => {
         tap.current = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -843,7 +898,7 @@ export function PlaygroundCanvas() {
       onPointerMissed={(e) => {
         const dx = e.clientX - tap.current.x;
         const dy = e.clientY - tap.current.y;
-        if (dx * dx + dy * dy > 144) return;
+        if (dx * dx + dy * dy > 2500) return;
         if (performance.now() - tap.current.t > 500) return;
         if (isTheaterNow()) usePlayground.getState().seizeNow();
         else usePlayground.getState().spawn();
@@ -851,10 +906,10 @@ export function PlaygroundCanvas() {
       style={{ touchAction: "none", height: "100%", width: "100%" }}
     >
       <Suspense fallback={null}>
-        <TextureGate>
+        <FallbackDeckTex>
           <World />
-        </TextureGate>
+        </FallbackDeckTex>
       </Suspense>
     </Canvas>
   );
-}
+});

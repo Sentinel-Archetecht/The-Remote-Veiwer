@@ -6,7 +6,7 @@ import { SIGNATURES, isLearned, learnedCount, useProgress, type TheaterId } from
 import { usePulse } from "@/lib/pulse";
 
 export type AffairTopic =
-  | "synapse"
+  | "neural"
   | "orbit"
   | "hub"
   | "native"
@@ -45,7 +45,7 @@ export const OUT_OF_BOUNDS =
 
 export const AFFAIR_AGENTS: AffairAgent[] = [
   {
-    id: "synapse",
+    id: "neural",
     name: "Neural Link",
     line: "CSF field. HSV, WNV, rabies. Tap to seize. No human bodies as pieces.",
     bounds: ["Virions only: HSV, WNV, Rabies", "Play is toggle and tap", "No human body meshes"],
@@ -146,7 +146,7 @@ type AffairsState = {
 
 function emptyHeld(): Record<AffairTopic, boolean> {
   return {
-    synapse: false,
+    neural: false,
     orbit: false,
     hub: false,
     native: false,
@@ -164,11 +164,21 @@ function readPersisted(): Persisted | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<Persisted>;
     return {
-      held: Array.isArray(parsed.held) ? (parsed.held.filter(isTopic) as AffairTopic[]) : [],
-      log: Array.isArray(parsed.log) ? parsed.log.filter(isFinding).slice(0, LOG_CAP) : [],
+      held: Array.isArray(parsed.held)
+        ? (parsed.held.map(canonTopic).filter((t): t is AffairTopic => Boolean(t)))
+        : [],
+      log: Array.isArray(parsed.log)
+        ? parsed.log
+            .filter(isFinding)
+            .map((f) => ({ ...f, topic: canonTopic(f.topic) ?? f.topic }))
+            .slice(0, LOG_CAP)
+        : [],
       lastAudit: typeof parsed.lastAudit === "number" ? parsed.lastAudit : null,
       intercepts: Array.isArray(parsed.intercepts)
-        ? parsed.intercepts.filter(isIntercept).slice(0, INTERCEPT_CAP)
+        ? parsed.intercepts
+            .filter(isIntercept)
+            .map((row) => ({ ...row, topic: canonTopic(row.topic) ?? row.topic }))
+            .slice(0, INTERCEPT_CAP)
         : [],
     };
   } catch {
@@ -197,8 +207,14 @@ function persistNow() {
   }
 }
 
+function canonTopic(v: unknown): AffairTopic | null {
+  if (v === "synapse") return "neural";
+  if (AFFAIR_AGENTS.some((a) => a.id === v)) return v as AffairTopic;
+  return null;
+}
+
 function isTopic(v: unknown): v is AffairTopic {
-  return AFFAIR_AGENTS.some((a) => a.id === v);
+  return canonTopic(v) !== null;
 }
 
 function isFinding(v: unknown): v is AffairFinding {
@@ -267,7 +283,7 @@ function auditFirstOrder(): AffairFinding[] {
   const neuralOk = neural.every((s) => NEURAL_OK.has(s.label));
   out.push(
     finding(
-      "synapse",
+      "neural",
       "Virions only",
       neuralOk ? "clear" : "hold",
       neuralOk
@@ -366,8 +382,8 @@ function independentMisses(first: AffairFinding[]): { topic: AffairTopic; reason
   const id = useIdentity.getState();
   const firstOf = (topic: AffairTopic) => first.find((f) => f.topic === topic);
 
-  if (!neural.every((s) => NEURAL_OK.has(s.label)) && firstOf("synapse")?.verdict !== "hold") {
-    misses.push({ topic: "synapse", reason: "Neural Link labels left HSV/WNV/Rabies and the Neural Link agent did not escalate." });
+  if (!neural.every((s) => NEURAL_OK.has(s.label)) && firstOf("neural")?.verdict !== "hold") {
+    misses.push({ topic: "neural", reason: "Neural Link labels left HSV/WNV/Rabies and the Neural Link agent did not escalate." });
   }
   const orbitLabels = orbit.map((s) => s.label).join(" ");
   const orbitBad = !orbit.every((s) => ORBIT_OK.has(s.label)) || /body|bodies|person|people|human face/i.test(orbitLabels);
@@ -499,8 +515,8 @@ export function assertOsAllowed(theater: TheaterId) {
   if (theater === "orbit" && isTopicHeld("orbit")) {
     return freeze("orbit", "strike", "God's Eye held. OS strike frozen.");
   }
-  if (theater === "neural" && isTopicHeld("synapse")) {
-    return freeze("synapse", "strike", "Neural Link held. OS strike frozen.");
+  if (theater === "neural" && isTopicHeld("neural")) {
+    return freeze("neural", "strike", "Neural Link held. OS strike frozen.");
   }
   const learned = useProgress.getState().learned;
   return SIGNATURES.some((s) => s.theater === theater && isLearned(learned, s.key));
@@ -508,8 +524,8 @@ export function assertOsAllowed(theater: TheaterId) {
 
 export function assertTheaterAllowed(theater: TheaterId) {
   if (isTopicHeld("affairs")) return freeze("affairs", "theater", "Affairs held. Both theaters frozen.");
-  if (theater === "neural" && isTopicHeld("synapse")) {
-    return freeze("synapse", "theater", "Neural Link held. CSF field frozen.");
+  if (theater === "neural" && isTopicHeld("neural")) {
+    return freeze("neural", "theater", "Neural Link held. CSF field frozen.");
   }
   if (theater === "orbit" && isTopicHeld("orbit")) {
     return freeze("orbit", "theater", "God's Eye held. Mesh freeze.");

@@ -28,14 +28,17 @@ npm run dev
 
 Install as a PWA from the live Hub, or host this tree yourself.
 
-## Play
+## Open
 
-1. Choose a lens before sign-in. **Red** is the raw wire. **Blue** is the briefing. Same facts. Glimpse the other side.
-2. Sign in with X, or play on the Viewer key.
-3. Two games only: **Neural Link** and **God's Eye**. Toggle a strain. Tap Drop, or tap the field. Tap a body to seize.
-4. SNAP window scores. Last four seconds or a close race is NOW — seize then or wait.
-5. One HUB PIN pairs every device. Rank, Sentinel OS, and seizes land at once.
-6. Mesh Board: local, national, globe.
+1. Gateway first: the eye, then **Red** or **Blue**. Same facts. Two deliveries.
+2. Fingerprint (or PIN) unlocks this Viewer.
+3. **TRVN social is home** — profile, mesh, vault. Neural Link and God's Eye are perks, never the landing.
+4. `/hub` is the map. `/hub/deck?door=neural` is Neural Link.
+5. One HUB PIN pairs every device. Keys stay on the device.
+
+## Native ARM64 (Pixel / GrapheneOS / Termux)
+
+The signed node is `remote-viewer-android-arm64.tar.gz` with `sha256sums.txt`. Build on-device with `CARGO_BUILD_JOBS=1`. This web DApp is the Network surface. The ARM64 binary is the Hydra mesh node.
 
 ## Decentralized
 
