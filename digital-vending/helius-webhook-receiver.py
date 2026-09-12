@@ -71,7 +71,7 @@ def load_sku_map() -> dict[str, str]:
                     continue
                 memo = str(item.get("memo") or "").strip()
                 sku = str(item.get("id") or "").strip()
-                if memo and sku and SKU_RE.match(sku):
+                if memo and sku and SKU_RE.fullmatch(sku):
                     mapping[memo.upper()] = sku
     except OSError:
         pass
