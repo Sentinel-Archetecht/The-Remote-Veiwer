@@ -1,10 +1,10 @@
-# START HERE — The Remote Viewer / The Sentinel
+# START HERE — The Remote Viewer
 
 Welcome.  
 This project has two surfaces that both exist **right now**:
 
 1. **Local-first tools** on *your* device (optical air-gap, age keys, Path B packs). Private data does not have to leave your machine.
-2. **The Viewer Hub** — a hosted DApp Remote Viewers sign into to defend The Sentinel, keep a profile, and run Command.
+2. **The Viewer Hub** — a hosted DApp Remote Viewers sign into to defend the network, keep a profile, and run Command.
 
 You do not need to be an expert.  
 If you can open a browser, you can use the hub. If you can paste commands into a terminal, you can try the local tools.
@@ -30,13 +30,13 @@ The hub **does** keep a Viewer session and a profile vault in Postgres. That is 
 
 ## Fastest way in: the Viewer Hub (browser)
 
-Open **[sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me)**
+Open **[the-remote-viewer.grok.me](https://the-remote-viewer.grok.me)**
 
 1. Create an account (email + password, or Google / X).
 2. Confirm age / OFAC (two checkboxes).
 3. On **Command**, tap **Intercept now**, then **Claim** the watch. That is the first win.
 4. The 12-station briefing is optional after that first watch — open it from Command when you want the map.
-5. Come back tomorrow. Miss a day and The Sentinel takes damage.
+5. Come back tomorrow. Miss a day and the network takes damage.
 
 Source for the hub: [`apps/hub`](apps/hub).  
 `apps/web` is an old scaffold. Ignore it if you want the real UI.
@@ -55,7 +55,7 @@ Source for the hub: [`apps/hub`](apps/hub).
 2. Open a terminal and run these commands one by one:
 
 ```bash
-git clone -b TheRemoteViewer https://github.com/Sentinel-Archetecht/The-Remote-Viewer.git
+git clone -b TheRemoteViewer https://github.com/Sentinel-Architech/The-Remote-Viewer.git
 cd The-Remote-Viewer
 bash modules/defense/integrity-pulse.sh
 ```
@@ -69,7 +69,7 @@ If the last command prints something about “PASS” or “RESULT”, the basic
 
 ```bash
 pkg update && pkg install git python nodejs age -y
-git clone -b TheRemoteViewer https://github.com/Sentinel-Archetecht/The-Remote-Viewer.git
+git clone -b TheRemoteViewer https://github.com/Sentinel-Architech/The-Remote-Viewer.git
 cd The-Remote-Viewer
 bash modules/defense/integrity-pulse.sh
 ```

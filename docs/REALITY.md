@@ -1,6 +1,6 @@
 # Reality — authority for PROVEN / LIVE claims
 
-**Updated 2026-08-22.**  
+**Updated 2026-09-04.**  
 **Rule:** PROVEN = ran under operator control on a real device. Scripts in git alone are not PROVEN.  
 **LIVE** = a hosted product surface that is running now. LIVE is not PROVEN-on-device, and it is not mainnet.
 
@@ -12,7 +12,7 @@
 
 | Surface | Status | Notes |
 |---------|--------|--------|
-| Viewer Hub DApp | **LIVE** | [`apps/hub`](../apps/hub) · [sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me) |
+| Viewer Hub DApp | **LIVE** | [`apps/hub`](../apps/hub) · [the-remote-viewer.grok.me](https://the-remote-viewer.grok.me) |
 | Viewer briefing | **OPTIONAL** | 12 stations after first watch; `viewer_profiles.tutorial_at` when sealed |
 | Daily Watch | **LIVE** | Defend / Mesh / Honeypot → claim TRV |
 | SENTINEL OS jack-in | **IN SOURCE** | 3D neuron flight on `/hub/neuron` and `/hub/os`. [`docs/SENTINEL-OS-JACK.md`](SENTINEL-OS-JACK.md). LIVE after grok.me republish. |
@@ -58,6 +58,8 @@ This hub uses accounts (Better Auth + Postgres). That does not make it a recover
 
 | Item | State |
 |------|--------|
+| Token Gateway (AR / GPS seize) | **IN SOURCE** — `/hub/token-gateway` drill · `token-gateway-server.ts` uses `getSql()` (Neon if `DATABASE_URL`, else PGLite). Migration `0018_gateway.sql` applies on next Hub `npm run build`. Not AR camera. Not LIVE until republish + a real seize on that Neon. |
+| Token Gateway protocols | Local ACID pivot + saga outbox. **Not 2PC.** Devices are not XA RMs. Paxos/Raft only if Hub is multi-replica. |
 | `trv_governance` on chain | Scaffold · CI blocked (**A**) |
 | Full mapTier + Keystore instrumentation | Needs Android shell |
 | Wear companion | Scaffold (**D**) |
@@ -67,6 +69,8 @@ This hub uses accounts (Better Auth + Postgres). That does not make it a recover
 | Path B external founders | **0** |
 | Expo / app-store mobile | PARKED (`apps/mobile`) |
 | `apps/web` Vite shell | Old scaffold — superseded by `apps/hub` |
+
+Neural Mesh, God’s Eye, and Token Gateway are fictional, pattern-based teaching sims. They train Viewers to defend the TRV decentralized network. They do not diagnose, name, or treat real people, and they are not Neuralink or live intelligence feeds.
 
 ## Track A
 
