@@ -1,4 +1,17 @@
-/** On-device Viewer wallet. Seed never leaves this browser. Unlock is a PIN the Viewer sets. */
+/** On-device Viewer wallet. Seed never leaves this browser. Unlock is a PIN the Viewer sets.
+ *
+ * Hybrid post-quantum support (2026):
+ * - Classical: Ed25519 (Solana-compatible, Web Crypto)
+ * - Primary PQ: ML-DSA-65 (NIST FIPS 204 / Dilithium)
+ * - Optional compact PQ: Falcon-512 (smaller signatures)
+ *
+ * Both PQ key pairs are deterministically derived from the same 32-byte seed.
+ * New wallets are created as "hybrid". Existing Ed25519 vaults can be upgraded.
+ * See docs/PQC-ALGORITHMS.md for trade-offs.
+ */
+
+import { ml_dsa65 } from "@noble/post-quantum/ml-dsa.js";
+import { falcon512 } from "@noble/post-quantum/falcon.js";
 
 const DB_NAME = "trv-wallet";
 const STORE = "vault";
@@ -8,11 +21,16 @@ const PKCS8_HEAD = Uint8Array.from([
   0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20,
 ]);
 
-export type VaultCurve = "ed25519" | "hash-v1";
+export type VaultCurve = "ed25519" | "hash-v1" | "hybrid";
 
 export type VaultRecord = {
   id: "primary";
+  /** Classical Ed25519 public key (base58) – primary address for compatibility */
   pubkey: string;
+  /** ML-DSA-65 public key (base58) when curve === "hybrid" */
+  pqPubkey?: string;
+  /** Optional Falcon-512 public key (base58) for compact signatures */
+  falconPubkey?: string;
   salt: string;
   iv: string;
   cipher: string;
@@ -21,13 +39,20 @@ export type VaultRecord = {
 
 export type HelmProof = {
   message: string;
+  /** Classical Ed25519 signature (base58) */
   signature: string;
   pubkey: string;
+  /** Post-quantum ML-DSA-65 signature (base58) – present on hybrid vaults */
+  pqSignature?: string;
+  pqPubkey?: string;
+  /** Optional Falcon-512 signature (smaller) */
+  falconSignature?: string;
+  falconPubkey?: string;
 };
 
 let sessionSeed: Uint8Array | null = null;
 let sessionCurve: VaultCurve | null = null;
-const listeners = new Set<() => void>;
+const listeners = new Set<() => void>();
 
 export function isUnlocked(): boolean {
   return sessionSeed !== null;
@@ -38,7 +63,9 @@ export function sessionVaultCurve(): VaultCurve | null {
 }
 
 export function vaultCurve(vault: VaultRecord | null): VaultCurve {
-  return vault?.curve === "ed25519" ? "ed25519" : "hash-v1";
+  if (vault?.curve === "hybrid") return "hybrid";
+  if (vault?.curve === "ed25519") return "ed25519";
+  return "hash-v1";
 }
 
 export function onWalletChange(fn: () => void): () => void {
@@ -106,6 +133,10 @@ function asBuffer(bytes: Uint8Array): ArrayBuffer {
   return copy.buffer;
 }
 
+// ---------------------------------------------------------------------------
+// Classical Ed25519
+// ---------------------------------------------------------------------------
+
 export async function ed25519PubRaw(seed: Uint8Array): Promise<Uint8Array> {
   const priv = await crypto.subtle.importKey("pkcs8", asBuffer(seedToPkcs8(seed)), { name: "Ed25519" }, true, ["sign"]);
   const jwk = await crypto.subtle.exportKey("jwk", priv);
@@ -126,6 +157,59 @@ export async function ed25519Verify(pubRaw: Uint8Array, msg: Uint8Array, sig: Ui
   const pub = await crypto.subtle.importKey("raw", asBuffer(pubRaw), { name: "Ed25519" }, false, ["verify"]);
   return crypto.subtle.verify({ name: "Ed25519" }, pub, asBuffer(sig), asBuffer(msg));
 }
+
+// ---------------------------------------------------------------------------
+// Primary PQ: ML-DSA-65 (NIST FIPS 204)
+// ---------------------------------------------------------------------------
+
+function mlDsaKeygenFromSeed(seed: Uint8Array) {
+  return ml_dsa65.keygen(seed);
+}
+
+export function mlDsaPubkeyFromSeed(seed: Uint8Array): string {
+  const { publicKey } = mlDsaKeygenFromSeed(seed);
+  return b58(publicKey);
+}
+
+export function mlDsaSign(seed: Uint8Array, msg: Uint8Array): Uint8Array {
+  const { secretKey } = mlDsaKeygenFromSeed(seed);
+  return ml_dsa65.sign(msg, secretKey);
+}
+
+export function mlDsaVerify(pubRaw: Uint8Array, msg: Uint8Array, sig: Uint8Array): boolean {
+  return ml_dsa65.verify(sig, msg, pubRaw);
+}
+
+// ---------------------------------------------------------------------------
+// Optional compact PQ: Falcon-512
+// ---------------------------------------------------------------------------
+
+function falconKeygenFromSeed(seed: Uint8Array) {
+  // Falcon prefers a 48-byte seed; expand the 32-byte seed deterministically
+  const expanded = new Uint8Array(48);
+  expanded.set(seed);
+  // Simple expansion for determinism (not a full KDF; sufficient for keygen seed)
+  for (let i = 32; i < 48; i++) expanded[i] = seed[i % 32] ^ (i & 0xff);
+  return falcon512.keygen(expanded);
+}
+
+export function falconPubkeyFromSeed(seed: Uint8Array): string {
+  const { publicKey } = falconKeygenFromSeed(seed);
+  return b58(publicKey);
+}
+
+export function falconSign(seed: Uint8Array, msg: Uint8Array): Uint8Array {
+  const { secretKey } = falconKeygenFromSeed(seed);
+  return falcon512.sign(msg, secretKey);
+}
+
+export function falconVerify(pubRaw: Uint8Array, msg: Uint8Array, sig: Uint8Array): boolean {
+  return falcon512.verify(sig, msg, pubRaw);
+}
+
+// ---------------------------------------------------------------------------
+// Persistence helpers
+// ---------------------------------------------------------------------------
 
 function rememberWalletMeta(curve: VaultCurve) {
   try {
@@ -182,24 +266,35 @@ async function derive(pin: string, saltIn: Uint8Array) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Public wallet API
+// ---------------------------------------------------------------------------
+
+/** Create a new hybrid wallet (Ed25519 + ML-DSA-65 + Falcon-512). Returns the classical pubkey. */
 export async function createWallet(pin: string): Promise<string> {
   const seed = crypto.getRandomValues(new Uint8Array(32));
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await derive(pin, salt);
   const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, seed);
+
   const pubkey = await ed25519PubkeyFromSeed(seed);
+  const pqPubkey = mlDsaPubkeyFromSeed(seed);
+  const falconPubkey = falconPubkeyFromSeed(seed);
+
   await putVault({
     id: "primary",
     pubkey,
+    pqPubkey,
+    falconPubkey,
     salt: bufToB64(salt),
     iv: bufToB64(iv),
     cipher: bufToB64(cipher),
-    curve: "ed25519",
+    curve: "hybrid",
   });
   sessionSeed = seed;
-  sessionCurve = "ed25519";
-  rememberWalletMeta("ed25519");
+  sessionCurve = "hybrid";
+  rememberWalletMeta("hybrid");
   emit();
   return pubkey;
 }
@@ -224,12 +319,35 @@ export async function unlockWallet(pin: string): Promise<string> {
   }
 }
 
-/** Re-derive an Ed25519 address from the same 32-byte seed. Hash-v1 unlock still works until this runs. */
+/** Upgrade an existing vault to full hybrid (ML-DSA-65 + Falcon-512). */
+export async function upgradeVaultToHybrid(): Promise<string> {
+  if (!sessionSeed) throw new Error("Unlock first");
+  const vault = await loadVault();
+  if (!vault) throw new Error("No wallet on this device");
+
+  const pubkey = await ed25519PubkeyFromSeed(sessionSeed);
+  const pqPubkey = mlDsaPubkeyFromSeed(sessionSeed);
+  const falconPubkey = falconPubkeyFromSeed(sessionSeed);
+
+  await putVault({
+    ...vault,
+    pubkey,
+    pqPubkey,
+    falconPubkey,
+    curve: "hybrid",
+  });
+  sessionCurve = "hybrid";
+  rememberWalletMeta("hybrid");
+  emit();
+  return pubkey;
+}
+
+/** @deprecated Prefer upgradeVaultToHybrid(). */
 export async function upgradeVaultToEd25519(): Promise<string> {
   if (!sessionSeed) throw new Error("Unlock first");
   const vault = await loadVault();
   if (!vault) throw new Error("No wallet on this device");
-  if (vaultCurve(vault) === "ed25519") return vault.pubkey;
+  if (vaultCurve(vault) === "ed25519" || vaultCurve(vault) === "hybrid") return vault.pubkey;
   const pubkey = await ed25519PubkeyFromSeed(sessionSeed);
   await putVault({ ...vault, pubkey, curve: "ed25519" });
   sessionCurve = "ed25519";
@@ -248,13 +366,21 @@ export function peekPubkeySync(vault: VaultRecord | null): string | null {
   return vault?.pubkey ?? null;
 }
 
+export function peekPqPubkeySync(vault: VaultRecord | null): string | null {
+  return vault?.pqPubkey ?? null;
+}
+
+export function peekFalconPubkeySync(vault: VaultRecord | null): string | null {
+  return vault?.falconPubkey ?? null;
+}
+
 export function exportSeedIfUnlocked(): string | null {
   if (!sessionSeed) return null;
   return b58(sessionSeed);
 }
 
 export async function exportSolanaSecretIfUnlocked(): Promise<string | null> {
-  if (!sessionSeed || sessionCurve !== "ed25519") return null;
+  if (!sessionSeed || (sessionCurve !== "ed25519" && sessionCurve !== "hybrid")) return null;
   const pub = await ed25519PubRaw(sessionSeed);
   const secret = new Uint8Array(64);
   secret.set(sessionSeed);
@@ -262,13 +388,42 @@ export async function exportSolanaSecretIfUnlocked(): Promise<string | null> {
   return b58(secret);
 }
 
+/** Sign a Helm proof. Hybrid vaults produce classical + ML-DSA + optional Falcon signatures. */
 export async function signHelmProof(): Promise<HelmProof> {
-  if (!sessionSeed || sessionCurve !== "ed25519") throw new Error("Unlock an Ed25519 vault first");
+  if (!sessionSeed) throw new Error("Unlock first");
+  if (sessionCurve !== "ed25519" && sessionCurve !== "hybrid") {
+    throw new Error("Unlock an Ed25519 or hybrid vault first");
+  }
   const vault = await loadVault();
   if (!vault) throw new Error("No wallet on this device");
+
   const message = `TRV-HELM|1|${vault.pubkey}|${new Date().toISOString()}`;
-  const signature = b58(await ed25519Sign(sessionSeed, new TextEncoder().encode(message)));
-  return { message, signature, pubkey: vault.pubkey };
+  const msgBytes = new TextEncoder().encode(message);
+
+  const signature = b58(await ed25519Sign(sessionSeed, msgBytes));
+
+  const proof: HelmProof = {
+    message,
+    signature,
+    pubkey: vault.pubkey,
+  };
+
+  if (sessionCurve === "hybrid") {
+    const pqSig = mlDsaSign(sessionSeed, msgBytes);
+    proof.pqSignature = b58(pqSig);
+    proof.pqPubkey = vault.pqPubkey ?? mlDsaPubkeyFromSeed(sessionSeed);
+
+    // Optional compact Falcon signature
+    try {
+      const fSig = falconSign(sessionSeed, msgBytes);
+      proof.falconSignature = b58(fSig);
+      proof.falconPubkey = vault.falconPubkey ?? falconPubkeyFromSeed(sessionSeed);
+    } catch {
+      // Falcon is best-effort; do not fail the proof if it errors
+    }
+  }
+
+  return proof;
 }
 
 export async function connectPhantom(): Promise<string> {
