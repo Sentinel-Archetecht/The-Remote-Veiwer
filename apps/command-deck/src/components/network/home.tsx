@@ -203,8 +203,8 @@ export function NetworkHome() {
               <div>
                 <h2 className="font-display text-xl">Hydra mesh</h2>
                 <p className="mt-1 text-sm leading-relaxed text-muted">
-                  This browser node broadcasts on the local channel. Android Wi-Fi Direct is the native Hydra node —
-                  same ledger, same DID.
+                  This browser node broadcasts on the local channel. Pixel / GrapheneOS ARM64 Hydra
+                  (`remote-viewer-android-arm64`) is the native node — same DID, Wi-Fi Direct, Titan M2.
                 </p>
               </div>
               <Radio className={`size-5 ${meshOn ? "text-sage" : "text-muted"}`} strokeWidth={1.75} />

@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Download, Fingerprint, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LIFE_TAG, MOTTO } from "@/lib/trv";
+import { canBiometric, enrollBiometric, gateVaultUnlock, hasEnrolledBiometric } from "@/lib/biometric";
 import { carryLife, destroyThisCopy, takeLife } from "@/lib/life";
 import { startHub } from "@/lib/hub-sync";
 import { useIdentity } from "@/lib/identity";
@@ -15,8 +16,24 @@ export function DigitalLife() {
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [armed, setArmed] = useState(false);
+  const [bioNote, setBioNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lens = usePill((s) => viewingLens(s));
+
+  async function fingerVault() {
+    setBioNote(null);
+    const ready = await canBiometric();
+    if (!ready) {
+      setBioNote("No fingerprint sensor on this browser. PIN wrap still holds the take.");
+      return;
+    }
+    const gate = hasEnrolledBiometric()
+      ? await gateVaultUnlock("Unlock Viewer life")
+      : await enrollBiometric(pubkey || "viewer", short || "Viewer");
+    if (gate.ok) setBioNote("Fingerprint verified. This vault stays on this device.");
+    else if (gate.reason === "cancelled") setBioNote("Fingerprint cancelled.");
+    else setBioNote("Fingerprint unavailable — use the six-digit wrap.");
+  }
 
   async function take() {
     setBusy("take");
@@ -86,6 +103,11 @@ export function DigitalLife() {
       <p className="mt-2 text-sm leading-relaxed text-foreground">{LIFE_TAG}</p>
       <p className="mt-2 text-xs leading-relaxed text-muted">{yours}</p>
       <p className="mt-2 font-mono text-xs text-sage">Viewer {short || "minting"}</p>
+      <Button className="mt-3 w-full" variant="solid" disabled={!pubkey} onClick={() => void fingerVault()}>
+        <Fingerprint className="size-4" strokeWidth={1.75} />
+        {hasEnrolledBiometric() ? "Unlock with fingerprint" : "Enroll fingerprint"}
+      </Button>
+      {bioNote ? <p className="mt-2 text-sm text-sage">{bioNote}</p> : null}
       <label className="mt-3 block">
         <span className="text-xs tracking-wide text-muted uppercase">Six digits wrap the take</span>
         <input
