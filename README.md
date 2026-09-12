@@ -1,71 +1,194 @@
-# The Remote Viewer (TRV) / The Sentinel
+# The Remote Viewer — 100% Native Stack, Open Source
 
-**New here?** → **[START_HERE.md](START_HERE.md)**  
-**Status authority:** [`docs/REALITY.md`](docs/REALITY.md) · **Hold map:** [`docs/SCAFFOLD-HOLD.md`](docs/SCAFFOLD-HOLD.md)  
-**Working branch:** `TheRemoteViewer`
-
-Solo-built · local-first node · zero-custody packs · optical air-gap · live Viewer Hub
-
----
-
-## Live Viewer Hub
-
-**This is the product. It is not a scaffold.**
+**Local-first. Defense-grade. No blockchain required.**
 
 | | |
 |--|--|
-| **Live** | [sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me) |
-| **Source** | [`apps/hub`](apps/hub) |
-| **Status** | **LIVE** as of 2026-08-20 |
-
-Shipped: first win on Command, daily watch, profile vault, public card, SENTINEL OS jack-in, `/hub/node` local Ed25519 runtime.
-
-`apps/web` is the **old Vite scaffold**. Use `apps/hub`.
-
-The hub does **not** recover age keys. Destroy = Restart on the local path.
+| **Live Product** | [sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me) |
+| **Technology** | TypeScript (TanStack Start) + PostgreSQL + Better Auth + age |
+| **License** | Open Source (MIT) |
+| **Status** | ✅ LIVE (Viewer Hub + Command Deck) |
+| **Working Branch** | `TheRemoteViewer` |
 
 ---
 
-## Local node (PROVEN)
+## What You Get
 
-Optical air-gap, Path B packs, integrity pulse — on a machine you control.
+### Live Viewer Hub
+
+**100% native stack. No chain dependency.**
+
+```bash
+cd apps/hub
+npm install && npm run dev
+# → http://localhost:3000
+# TanStack Start + Better Auth + PGLite
+```
+
+**Features:**
+- ✅ Citizen registration (on-device Ed25519)
+- ✅ Daily watch (briefing + intercepts)
+- ✅ Profile vault (encrypted notes)
+- ✅ Public card (`/v/$handle`)
+- ✅ SENTINEL OS jack-in (Command Deck integration)
+- ✅ Red/Blue lens (bias detection)
+
+### Optical Air-Gap (PROVEN)
+
+**Defend-grade encryption. Works offline.**
+
+```bash
+bash modules/defense/integrity-pulse.sh
+bash apps/ui/serve-ui.sh
+# → http://127.0.0.1:8765/
+# age + Soliton LT + QR offline
+```
+
+**Verified on:**
+- ✅ GrapheneOS (reference)
+- ✅ Termux (Pixel-class Android)
+- ✅ Local macOS/Linux
+
+### Command Deck (LIVE)
+
+**Synapse + God's Eye + Mesh Board + HUB**
+
+Located in `apps/command-deck/`. Control briefing, watch intercepts, manage posture.
+
+---
+
+## Open Source + Native Stack
+
+**No blockchain lock-in.**
+
+```
+apps/hub/
+  ├── TanStack Start (open-source SSR)
+  ├── Better Auth (MIT open-source auth)
+  ├── React + TypeScript
+  └── PGLite/Neon (postgres, portable)
+
+optical-airgap/
+  ├── age encryption (open spec)
+  ├── Soliton LT (compression)
+  ├── QR offline (paulmillr/qr)
+  └── CLI (bash + cargo, vendored)
+```
+
+**All MIT or Apache-2.0 licensed.** Fork freely. Run on your infrastructure.
+
+See [docs/NATIVE-STACK.md](docs/NATIVE-STACK.md) for full tech breakdown.
+
+---
+
+## Quick Start
+
+### 1. Run the Hub Locally
 
 ```bash
 git clone -b TheRemoteViewer https://github.com/Sentinel-Architech/The-Remote-Viewer.git
-cd The-Remote-Viewer
-bash modules/defense/integrity-pulse.sh
+cd The-Remote-Viewer/apps/hub
+npm install
+npm run dev
 ```
 
-Operator UI: `bash apps/ui/serve-ui.sh` → http://127.0.0.1:8765/
+### 2. Verify Optical Air-Gap
+
+```bash
+bash optical-airgap/modules/defense/integrity-pulse.sh
+```
+
+### 3. Deploy Hub to Your Infrastructure
+
+```bash
+# Option A: Vercel (serverless)
+npm run deploy
+
+# Option B: Docker (self-hosted)
+docker build -t trv-hub .
+docker run -p 3000:3000 trv-hub
+
+# Option C: Railway, Render, fly.io
+# Any Node.js host works
+```
 
 ---
 
-## What is held (do not upgrade)
+## What's NOT Included (Intentional)
 
-| Surface | Action |
-|---------|--------|
-| `solana/` Track A | **HOLD.** Not mainnet, not audited, CI blocked. Do not bump Anchor. |
-| `contracts/` EVM | **HOLD.** Parallel scaffold. |
-| `apps/mobile` Expo | **PARKED.** |
-| Root space-named note dumps | **DELETE** on `sentinel-repair/root-declutter`. |
+| Item | Why | Path |
+|------|-----|------|
+| **Solana Track A** | Needs external build host | 🔴 SCAFFOLD |
+| **EVM Contracts** | Not active | 🔴 HELD |
+| **Mobile (Expo)** | Parked; use web | 🔴 PARKED |
+| **Apps/Web (Vite)** | Superseded by Hub | 🔴 LEGACY |
 
-Saying the hub is live is not saying the chain is live.
+**This is by design.** We ship what works. Solana governance is testnet-only and requires external Anchor infrastructure. Fork us and add it if you need it.
 
 ---
 
-## Path B packs
+## Economics (Locked)
 
-USDC memo on Solana is a **payment signal**, not `trv_governance`.
+**Viewer Hub Subscription:**
+- $10/month or $96/year (20% savings)
+- Organization tier: $1,200/year
+- 80/10/10 revenue split
+- Self-hosted version: Run your own, no licensing fees
 
-| Pack | Price | Memo |
-|------|------:|------|
-| TRV Posture Lite | 11 USDC | `TRV-Posture-Lite` |
-| TRV Posture Pack | 25 USDC | `TRV-Posture-Pack` |
+**Posture Packs** (testnet signals):
+- TRV Posture Lite: 11 USDC memo
+- TRV Posture Pack: 25 USDC memo
 
-See [`digital-vending/buy.html`](digital-vending/buy.html) and [`docs/public/BUY.md`](docs/public/BUY.md).
+See [`docs/VALUE.md`](docs/VALUE.md).
+
+---
+
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [`STATUS.md`](STATUS.md) | What's LIVE, what's HELD, current state |
+| [`docs/REALITY.md`](docs/REALITY.md) | Ground truth (all contradictions resolved) |
+| [`docs/SCAFFOLD-HOLD.md`](docs/SCAFFOLD-HOLD.md) | Why Solana/EVM/Mobile are not shipped |
+| [`docs/NATIVE-STACK.md`](docs/NATIVE-STACK.md) | Open source tech stack + roadmap |
+| [`apps/README.md`](apps/README.md) | Client applications breakdown |
+| [`optical-airgap/README.md`](optical-airgap/README.md) | Encryption + air-gap design |
 
 ---
 
 ## License
 
-See [LICENSE](LICENSE).
+**MIT License.** Use, modify, distribute freely. See [LICENSE](LICENSE).
+
+---
+
+## Fork & Deploy
+
+```bash
+# Clone your copy
+git clone https://github.com/Sentinel-Architech/The-Remote-Viewer.git
+cd The-Remote-Viewer
+
+# Make it yours
+git remote set-url origin https://github.com/YOUR-ORG/your-viewer.git
+git push -u origin TheRemoteViewer
+
+# Deploy native stack
+cd apps/hub
+npm install && npm run build
+# Deploy to your Node host (Railway, Vercel, self-hosted)
+```
+
+**No licensing restrictions. No blocked forks. 100% open source.**
+
+---
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/Sentinel-Architech/The-Remote-Viewer/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/Sentinel-Architech/The-Remote-Viewer/discussions)
+- **Security:** [SECURITY.md](SECURITY.md)
+
+---
+
+**Built in the open. Owned by you. No blockchain required.**
