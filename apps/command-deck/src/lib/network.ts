@@ -142,12 +142,11 @@ export const useNetwork = create<NetworkState>((set, get) => ({
       ...p,
       votes: storedVotes[p.id] ?? {},
     }));
-    const surface = readJson<Surface>(SURFACE_KEY, "network");
     set({
       ready: true,
       profile,
       proposals,
-      surface: surface === "watch" || surface === "governance" ? surface : "network",
+      surface: "network",
       license: readJson<LicenseType>(LICENSE_KEY, "sovereign"),
     });
     const pubkey = useIdentity.getState().pubkey;
