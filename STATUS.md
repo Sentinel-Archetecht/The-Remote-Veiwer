@@ -62,8 +62,8 @@
 ## Economics
 
 **Hub Pricing** (locked in `docs/VALUE.md`):
-- $10/month or $96/year
-- Yearly saves 20%
+- $10/month or $50/year
+- Yearly saves 46%
 - Organization tier: $1,200/year
 - 80/10/10 revenue split + 5% secondary
 
@@ -101,6 +101,7 @@ bash apps/ui/serve-ui.sh
 3. **No blockchain lock-in.** Hub runs without any chain. Testnet memos are signal only.
 4. **100% open source.** Native TypeScript stack. Postgres. age encryption. GrapheneOS tested.
 5. **No fake "LIVE ATO" claims.** This is a defense posture tool, not a FEDRAMP or certified product.
+6. **Hub-to-live gap (#55):** `/hub/node` returns dark-path; republish from `apps/hub` needed to ship.
 
 ---
 
