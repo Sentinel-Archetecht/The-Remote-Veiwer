@@ -179,7 +179,9 @@ def process_tx(obj: dict) -> dict:
     if not SIG_RE.match(sig):
         return {"ok": False, "error": "bad signature"}
 
-    cmd = ["bash", str(VENDING / "auto-deliver.sh"), sku, sig]
+    # FIXED: Use argv list instead of shell string (avoid command-line injection)
+    script_path = str(VENDING / "auto-deliver.sh")
+    cmd = ["bash", script_path, sku, sig]
     env = os.environ.copy()
     env["DELIVER_DIR"] = str(DELIVER_DIR)
     try:
