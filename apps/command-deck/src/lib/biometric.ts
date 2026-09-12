@@ -8,6 +8,9 @@ export type GateResult =
   | { ok: true }
   | { ok: false; reason: "cancelled" | "unavailable" | "pin" };
 
+let memoryUnlock = false;
+let memoryPinHash = "";
+
 function rpId() {
   return window.location.hostname;
 }
@@ -19,7 +22,25 @@ function userBytes(id: string) {
   return out;
 }
 
+function readStore(key: string) {
+  try {
+    return window.localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeStore(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function sessionOpen() {
+  if (memoryUnlock) return true;
   try {
     return sessionStorage.getItem(SESSION_KEY) === "1";
   } catch {
@@ -28,6 +49,7 @@ export function sessionOpen() {
 }
 
 export function markSessionOpen() {
+  memoryUnlock = true;
   try {
     sessionStorage.setItem(SESSION_KEY, "1");
   } catch {
@@ -36,28 +58,32 @@ export function markSessionOpen() {
 }
 
 export function hasEnrolledBiometric() {
-  try {
-    return Boolean(localStorage.getItem(CRED_KEY));
-  } catch {
-    return false;
-  }
+  return Boolean(readStore(CRED_KEY));
 }
 
 export function hasSessionPin() {
-  try {
-    return Boolean(localStorage.getItem(PIN_HASH));
-  } catch {
-    return false;
-  }
+  return Boolean(memoryPinHash || readStore(PIN_HASH));
 }
 
 export async function canBiometric() {
   if (typeof window === "undefined" || !window.PublicKeyCredential) return false;
   try {
+    if (window.self !== window.top) return false;
     return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
   } catch {
     return false;
   }
+}
+
+async function pinDigest(pin: string) {
+  const payload = `trv-session-pin:${pin}`;
+  if (globalThis.crypto?.subtle) {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+    return bufToB64(new Uint8Array(digest));
+  }
+  let h = 2166136261;
+  for (let i = 0; i < payload.length; i++) h = Math.imul(h ^ payload.charCodeAt(i), 16777619);
+  return `fnv:${h >>> 0}`;
 }
 
 export async function enrollBiometric(userId: string, displayName: string): Promise<GateResult> {
@@ -81,7 +107,7 @@ export async function enrollBiometric(userId: string, displayName: string): Prom
       },
     })) as PublicKeyCredential | null;
     if (!cred) return { ok: false, reason: "cancelled" };
-    localStorage.setItem(CRED_KEY, bufToB64(new Uint8Array(cred.rawId)));
+    writeStore(CRED_KEY, bufToB64(new Uint8Array(cred.rawId)));
     markSessionOpen();
     return { ok: true };
   } catch (err) {
@@ -95,19 +121,15 @@ export async function enrollBiometric(userId: string, displayName: string): Prom
 export async function gateVaultUnlock(reason: string): Promise<GateResult> {
   void reason;
   if (!(await canBiometric())) return { ok: false, reason: "unavailable" };
-  let stored = "";
-  try {
-    stored = localStorage.getItem(CRED_KEY) ?? "";
-  } catch {
-    stored = "";
-  }
+  const stored = readStore(CRED_KEY);
   if (!stored) return { ok: false, reason: "unavailable" };
   try {
+    const id = b64ToBuf(stored);
     const assertion = await navigator.credentials.get({
       publicKey: {
         challenge: crypto.getRandomValues(new Uint8Array(32)),
         rpId: rpId(),
-        allowCredentials: [{ type: "public-key", id: b64ToBuf(stored).buffer as ArrayBuffer }],
+        allowCredentials: [{ type: "public-key", id }],
         userVerification: "required",
         timeout: 60_000,
       },
@@ -125,20 +147,22 @@ export async function gateVaultUnlock(reason: string): Promise<GateResult> {
 
 export async function setSessionPin(pin: string) {
   if (!/^\d{6}$/.test(pin)) throw new Error("Six digits.");
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`trv-session-pin:${pin}`));
-  localStorage.setItem(PIN_HASH, bufToB64(new Uint8Array(digest)));
+  const hash = await pinDigest(pin);
+  memoryPinHash = hash;
+  writeStore(PIN_HASH, hash);
   markSessionOpen();
 }
 
 export async function unlockWithPin(pin: string): Promise<GateResult> {
-  if (!/^\d{6}$/.test(pin)) return { ok: false, reason: "pin" };
-  const stored = localStorage.getItem(PIN_HASH);
+  const clean = pin.replace(/\D/g, "").slice(0, 6);
+  if (!/^\d{6}$/.test(clean)) return { ok: false, reason: "pin" };
+  const stored = memoryPinHash || readStore(PIN_HASH);
   if (!stored) {
-    await setSessionPin(pin);
+    await setSessionPin(clean);
     return { ok: true };
   }
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`trv-session-pin:${pin}`));
-  if (bufToB64(new Uint8Array(digest)) !== stored) return { ok: false, reason: "pin" };
+  const hash = await pinDigest(clean);
+  if (hash !== stored) return { ok: false, reason: "pin" };
   markSessionOpen();
   return { ok: true };
 }
