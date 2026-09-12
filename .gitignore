@@ -86,3 +86,5 @@ temp/
 !apps/hub/public/**/*.svg
 !branding/**/*.png
 !branding/**/*.jpg
+.DS_Store
+node_modules/
