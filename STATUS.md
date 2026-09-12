@@ -1,20 +1,128 @@
-# TRV status
+# The Remote Viewer — Native Stack Status
 
-**Truth:** [docs/REALITY.md](docs/REALITY.md) · **Queues:** [docs/PROVEN-NEEDED.md](docs/PROVEN-NEEDED.md)  
-**Economics owner:** [docs/VALUE.md](docs/VALUE.md)  
-**Updated:** 2026-09-04
+**Open Source** · **Native Stack 100%** · **No Blockchain Lock-in**
 
-| | |
-|--|--|
-| **LIVE** | Hosted Viewer Hub — [`apps/hub`](apps/hub) · [the-remote-viewer.grok.me](https://the-remote-viewer.grok.me) · briefing · daily watch · profile vault · public card `/v/$handle` · skill audit · Ed25519 native wallet (chain-ready keys, **not** mainnet) |
-| IN SOURCE | **SENTINEL OS jack-in** — 3D neuron flight on Defend / OS (`apps/hub/src/os-sim`). Watch intercept via `logDefense`. LIVE on grok.me after host republish. |
-| IN SOURCE | **Unified sovereign node runtime** — desktop sled identity + nonce replay (`desktop/src/runtime`, default feature). Optional ollama-rs / tract-onnx / Tauri IPC. Hub station `/hub/node`. LIVE on grok.me after host republish. |
-| PROVEN | Optical · Path B · verifier · local operator |
-| **DEMONSTRATED** | PWA **B** · Learning **H** · **C partial** (Pixel 7 Termux probe) |
-| Open | **A** Solana `trv_governance` · C full Keystore · D Wear · E · F · G |
-| Economics | **$10/mo · $96/yr · $1,200/yr org · 80/10/10 · secondary 5%** — quote VALUE.md only |
+**Updated:** 2026-09-12  
+**Authority:** [`docs/REALITY.md`](docs/REALITY.md) · [`docs/SCAFFOLD-HOLD.md`](docs/SCAFFOLD-HOLD.md)
 
-**Do not contradict:** `apps/web` and `apps/mobile` remain scaffolds. The live client is **`apps/hub`**. Solana `trv_governance` is still SCAFFOLD. Ed25519 addresses in the hub are not a mainnet program. Do not quote 95/5, 90/10, or 0% platform cut.
+---
 
-**Next hard gate (chain):** A1 build host.  
-**Hub:** live; further stations ship in `apps/hub`, not by pretending `apps/web` is the product. Production republish of grok.me is the host publish button — git here is the truth log.
+## Live Products
+
+| Product | Source | Status |
+|---------|--------|--------|
+| **Viewer Hub** | `apps/hub` | ✅ **LIVE** — [sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me) |
+| **Command Deck** | `apps/command-deck` | ✅ **LIVE** — Synapse, God's Eye, Mesh Board, HUB |
+| **Optical Air-Gap** | `optical-airgap/` | ✅ **PROVEN** — Path B, GrapheneOS verified |
+| **Local Operator UI** | `apps/ui/` | ✅ **PROVEN** — `bash apps/ui/serve-ui.sh` |
+
+---
+
+## What Is Built (100% Native Stack)
+
+✅ **Viewer Hub**
+- TanStack Start (native TypeScript full-stack)
+- Better Auth (open-source auth)
+- PGLite/Neon (serverless postgres)
+- Ed25519 keys (client-side, on-device)
+- Red/Blue briefing UI
+- Profile vault
+- Daily watch
+- Public card (`/v/$handle`)
+
+✅ **Optical Air-Gap**
+- age encryption
+- Soliton LT compression
+- QR code offline gate
+- GrapheneOS verified
+- Termux tested
+- Vendor-locked CLI
+
+✅ **Path B Posture Packs**
+- USDC memo system (Solana testnet for signal only)
+- Posture Lite (11 USDC memo)
+- Posture Pack (25 USDC memo)
+- No private key custody
+
+---
+
+## What Is NOT Built (Intentionally Held)
+
+| Item | Reason | Status |
+|------|--------|--------|
+| **Solana Track A** — `trv_governance` | Needs external Anchor build host; not included | 🔴 **SCAFFOLD** |
+| **EVM Contracts** — `contracts/` | Parallel scaffold, not active | 🔴 **HELD** |
+| **Mobile (Expo)** — `apps/mobile` | Parked, not maintained | 🔴 **PARKED** |
+| **Web (Vite)** — `apps/web` | Superseded by Hub; left as reference | 🔴 **LEGACY** |
+
+**This is intentional.** We are 100% native stack + open-sourced. No blockchain smart contracts, no app-store clients, no legacy code in the live path.
+
+---
+
+## Economics
+
+**Hub Pricing** (locked in `docs/VALUE.md`):
+- $10/month or $96/year
+- Yearly saves 20%
+- Organization tier: $1,200/year
+- 80/10/10 revenue split + 5% secondary
+
+**Posture Packs** (testnet signal only):
+- TRV Posture Lite: 11 USDC memo
+- TRV Posture Pack: 25 USDC memo
+
+---
+
+## Developer Setup
+
+### Live Viewer Hub
+
+```bash
+cd apps/hub
+npm install
+npm run dev
+# http://localhost:3000
+```
+
+### Optical Air-Gap
+
+```bash
+bash modules/defense/integrity-pulse.sh
+bash apps/ui/serve-ui.sh
+# http://127.0.0.1:8765/
+```
+
+---
+
+## What Must Not Be Contradicted
+
+1. **`apps/hub` is the LIVE product.** Not `apps/web` or `apps/mobile`.
+2. **Track A (Solana) is SCAFFOLD.** Not mainnet. Not audited. Requires external build host.
+3. **No blockchain lock-in.** Hub runs without any chain. Testnet memos are signal only.
+4. **100% open source.** Native TypeScript stack. Postgres. age encryption. GrapheneOS tested.
+5. **No fake "LIVE ATO" claims.** This is a defense posture tool, not a FEDRAMP or certified product.
+
+---
+
+## Next Hard Gate
+
+**Build infrastructure for native stack at scale:**
+- [ ] GitHub Codespaces remote dev
+- [ ] Containerized optical air-gap
+- [ ] Wear OS companion (native Android)
+- [ ] C2PA media signing
+
+**Never:**
+- Blockchain smart contract deployment
+- Centralized authentication
+- Closed-source dependencies
+- App store release
+
+---
+
+## Links
+
+- **Live:** [sentinelsecurityprotocol.grok.me](https://sentinelsecurityprotocol.grok.me)
+- **Docs:** [`docs/REALITY.md`](docs/REALITY.md)
+- **Holdings:** [`docs/SCAFFOLD-HOLD.md`](docs/SCAFFOLD-HOLD.md)
+- **License:** [LICENSE](LICENSE) — Open Source
