@@ -26,7 +26,7 @@ jobs:
           podman build --tag local-node:latest .
 
       - name: Run Trivy Vulnerability Scanner
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'local-node:latest'
           format: 'table'
