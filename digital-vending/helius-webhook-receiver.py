@@ -174,9 +174,9 @@ def process_tx(obj: dict) -> dict:
         return {"ok": False, "error": "no catalog memo", "sig": sig}
 
     sku = memo_to_sku(memo)
-    if not sku or not SKU_RE.match(sku):
+    if not sku or not SKU_RE.fullmatch(sku):
         return {"ok": False, "error": "unknown memo", "sig": sig}
-    if not SIG_RE.match(sig):
+    if not SIG_RE.fullmatch(sig):
         return {"ok": False, "error": "bad signature"}
 
     # FIXED: Use argv list instead of shell string (avoid command-line injection)
