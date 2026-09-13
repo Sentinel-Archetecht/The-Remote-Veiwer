@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { captureReactError } from "@/lib/sentry";
 
 interface Props {
   children: ReactNode;
@@ -19,6 +20,7 @@ interface State {
 /**
  * Isolates runtime errors in a subtree of the Command Deck.
  * Does not catch build-time / parse-time errors (those fail before React mounts).
+ * When Sentry is configured (VITE_SENTRY_DSN), errors are also reported.
  */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
@@ -28,8 +30,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Replace with preferred telemetry when available
     console.error("[Command Deck ErrorBoundary]", error, errorInfo.componentStack);
+    captureReactError(error, errorInfo);
   }
 
   private handleReset = () => {
