@@ -150,6 +150,7 @@ See [`docs/VALUE.md`](docs/VALUE.md).
 | [`docs/ERROR-BOUNDARY.md`](docs/ERROR-BOUNDARY.md) | Runtime error isolation for the Command Deck |
 | [`docs/SENTRY.md`](docs/SENTRY.md) | Optional Sentry error tracking setup |
 | [`docs/SANDBOX-JSX-NOTE.md`](docs/SANDBOX-JSX-NOTE.md) | Sandbox parse-error recovery notes |
+| [`docs/CHAOS-ENGINEERING.md`](docs/CHAOS-ENGINEERING.md) | Chaos engineering practices + first experiment |
 
 ---
 
@@ -166,6 +167,7 @@ See [`docs/VALUE.md`](docs/VALUE.md).
 | [`docs/ERROR-BOUNDARY.md`](docs/ERROR-BOUNDARY.md) | Runtime error isolation |
 | [`docs/SENTRY.md`](docs/SENTRY.md) | Optional Sentry setup |
 | [`docs/SANDBOX-JSX-NOTE.md`](docs/SANDBOX-JSX-NOTE.md) | Sandbox recovery notes |
+| [`docs/CHAOS-ENGINEERING.md`](docs/CHAOS-ENGINEERING.md) | Chaos engineering + first experiment |
 
 ---
 
