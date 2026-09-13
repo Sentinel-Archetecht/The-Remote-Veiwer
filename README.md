@@ -143,6 +143,16 @@ See [`docs/VALUE.md`](docs/VALUE.md).
 
 ---
 
+## Resilience & Observability
+
+| Doc | Purpose |
+|-----|---------|
+| [`docs/ERROR-BOUNDARY.md`](docs/ERROR-BOUNDARY.md) | Runtime error isolation for the Command Deck |
+| [`docs/SENTRY.md`](docs/SENTRY.md) | Optional Sentry error tracking setup |
+| [`docs/SANDBOX-JSX-NOTE.md`](docs/SANDBOX-JSX-NOTE.md) | Sandbox parse-error recovery notes |
+
+---
+
 ## Documentation
 
 | Doc | Purpose |
@@ -153,6 +163,9 @@ See [`docs/VALUE.md`](docs/VALUE.md).
 | [`docs/NATIVE-STACK.md`](docs/NATIVE-STACK.md) | Open source tech stack + roadmap |
 | [`apps/README.md`](apps/README.md) | Client applications breakdown |
 | [`optical-airgap/README.md`](optical-airgap/README.md) | Encryption + air-gap design |
+| [`docs/ERROR-BOUNDARY.md`](docs/ERROR-BOUNDARY.md) | Runtime error isolation |
+| [`docs/SENTRY.md`](docs/SENTRY.md) | Optional Sentry setup |
+| [`docs/SANDBOX-JSX-NOTE.md`](docs/SANDBOX-JSX-NOTE.md) | Sandbox recovery notes |
 
 ---
 
