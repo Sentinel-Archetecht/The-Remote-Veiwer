@@ -34,8 +34,10 @@ export const GATEWAY_YEAR = "1983";
 export const GATEWAY_HREF = "https://www.cia.gov/readingroom/document/cia-rdp96-00788r001700210016-5";
 export const GATEWAY_PDF = "https://www.cia.gov/readingroom/docs/CIA-RDP96-00788R001700210016-5.pdf";
 export const GATEWAY_ROOM = "https://www.cia.gov/readingroom/";
-export const GATEWAY_TAG =
-  "CIA FOIA, declassified. Holographic consciousness, hemispheric sync, Monroe Gateway. Humans guide. Sentinel OS learns. In God We Trust. The Remote Viewer Network starts here.";
+export const COMMISSION_SERIAL = "TRV-OZ00H-20260912-001";
+export const COMMISSION_STILL = "/gateway/TRV-OZ00H-20260912-001.png";
+export const COMMISSION_CLAIM =
+  "Protected original — commissioned work — exclusive. © 2026. No unauthorized use.";
 
 export function sharePulseHref(score = 0) {
   const body = score

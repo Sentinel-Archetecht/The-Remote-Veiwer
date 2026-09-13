@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { Eye, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MOTTO, NETWORK_NAME } from "@/lib/trv";
+import { MOTTO, COMMISSION_SERIAL, COMMISSION_STILL, COMMISSION_CLAIM } from "@/lib/trv";
 import { PILL_TAG, usePill, viewingLens } from "@/lib/pill";
 import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
 
 const X_PROVIDER = GROK_PROVIDERS.find((p) => p.idp === "twitter");
-const WIDE_MQ = "(min-width: 880px) and (min-aspect-ratio: 4/3)";
 
 function signInWithX() {
   if (!authEnabled || !X_PROVIDER) return;
@@ -14,52 +13,15 @@ function signInWithX() {
 }
 
 function GatewayFilm() {
-  const ref = useRef<HTMLVideoElement>(null);
-  const [wide, setWide] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia(WIDE_MQ);
-    const apply = () => setWide(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => {
-      if (reduce.matches) {
-        video.pause();
-        return;
-      }
-      void video.play().catch(() => undefined);
-    };
-    sync();
-    reduce.addEventListener("change", sync);
-    return () => reduce.removeEventListener("change", sync);
-  }, [wide]);
-
-  const src = wide ? "/gateway/eye-wide.mp4" : "/gateway/eye.mp4";
-  const poster = wide ? "/gateway/eye-wide.jpg" : "/gateway/eye.jpg";
-
   return (
-    <video
-      key={src}
-      ref={ref}
+    <img
       className="gateway-film"
       data-gateway-eye="1"
-      autoPlay
-      muted
-      loop
-      playsInline
-      preload="auto"
-      poster={poster}
+      data-serial={COMMISSION_SERIAL}
+      src={COMMISSION_STILL}
+      alt=""
       aria-hidden="true"
-    >
-      <source src={src} type="video/mp4" />
-    </video>
+    />
   );
 }
 
@@ -86,13 +48,6 @@ export function PillGate() {
       <div className="gateway-veil" aria-hidden="true" />
       <div className="gateway-copy">
         <p className="gateway-rise text-center text-xs font-medium tracking-[0.32em] text-sage uppercase">{MOTTO}</p>
-        <h1 className="gateway-rise font-display mt-3 text-center text-4xl font-semibold tracking-tight sm:text-5xl">
-          {NETWORK_NAME}
-        </h1>
-        <p className="gateway-rise mt-2 text-center text-sm tracking-[0.18em] text-muted uppercase">How you hear the facts</p>
-        <p className="gateway-rise mx-auto mt-2 max-w-sm text-center text-sm leading-relaxed text-muted">
-          Same facts. Two deliveries. Red is the raw wire. Blue is the briefing.
-        </p>
       </div>
       <div className="gateway-cta">
         <p className="mb-2 text-center text-xs tracking-[0.16em] text-sage uppercase">Tap a pill to enter</p>
@@ -129,6 +84,8 @@ export function PillGate() {
           </button>
         </div>
         <p className="mt-2 text-center text-xs leading-relaxed text-muted">Not two truths. One fact. Two ways it arrives.</p>
+        <p className="mt-1 text-center font-mono text-[10px] tracking-[0.12em] text-subtle">{COMMISSION_SERIAL}</p>
+        <p className="sr-only">{COMMISSION_CLAIM}</p>
       </div>
     </div>
   );

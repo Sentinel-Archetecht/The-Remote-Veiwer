@@ -459,17 +459,10 @@
 
 .gateway-gate {
   background-color: var(--color-background);
-  background-image: url("/gateway/eye.jpg");
-  background-position: center 42%;
+  background-image: url("/gateway/TRV-OZ00H-20260912-001.png");
+  background-position: center 28%;
   background-size: cover;
   background-repeat: no-repeat;
-}
-
-@media (min-width: 880px) and (min-aspect-ratio: 4/3) {
-  .gateway-gate {
-    background-image: url("/gateway/eye-wide.jpg");
-    background-position: center;
-  }
 }
 
 .gateway-film {
@@ -479,13 +472,18 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 42%;
+  object-position: center 28%;
   pointer-events: none;
+  animation: gateway-breathe 14s var(--ease-in-out) infinite;
 }
 
-@media (min-width: 880px) and (min-aspect-ratio: 4/3) {
-  .gateway-film {
-    object-position: center;
+@keyframes gateway-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
   }
 }
 
@@ -617,7 +615,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gateway-film {
-    visibility: hidden;
+    animation: none;
   }
   .gateway-rise {
     animation: none;
